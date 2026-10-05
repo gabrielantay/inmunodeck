@@ -41,9 +41,9 @@
     .card-bio:active:not(.disabled) { transform: scale(0.95); }
     
     .c-img { 
-  height: 250px; 
-  background-size: 122%; /* ¡El truco! Hace un zoom del 22% para sacar la cuadrícula del marco */
-  background-position: center 6%; /* Alinea la imagen ligeramente hacia arriba para no cortar el título dibujado */
+  height: 310px; /* Recuperamos 60 píxeles de altura para que se vea la parte inferior de tu dibujo */
+  background-size: 138%; /* Aumentamos el zoom para expulsar los cuadros blancos fuera de los bordes */
+  background-position: center 2%; /* Alineamos desde arriba para no cortar el título de tu dibujo */
   background-repeat: no-repeat;
   border-bottom: 3px solid #1e293b; 
   position: relative; 
@@ -87,8 +87,8 @@
     .btn-turn:active { transform: translateY(4px); box-shadow: none; }
     
     .hand-container { display: flex; gap: 8px; justify-content: flex-start; overflow-x: auto; padding-bottom: 5px; }
-    .hand-container .card-bio { width: 140px; flex-shrink: 0; }
-    .hand-container .c-img { height: 165px; background-size: 122%; background-position: center 6%; }
+    .hand-container .card-bio { width: 180px; flex-shrink: 0; }
+    .hand-container .c-img { height: 260px; background-size: 138%; background-position: center 2%; }
     .hand-container .c-bio-desc { display: none; }
     .hand-container .c-mechanic { font-size: 9px; padding: 2px; }
 
