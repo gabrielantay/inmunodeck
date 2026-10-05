@@ -32,7 +32,7 @@
     .pathogen-vuln { font-size: 13px; color: #cbd5e1; margin-top: 5px; line-height: 1.4; font-weight: 500; }
     
     .draft-body { flex: 1 1 auto; overflow-y: auto; padding: 15px; }
-    .draft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; padding-bottom: 30px; }
+    .draft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 18px; padding-bottom: 25px; }
     .draft-footer { flex: 0 0 auto; padding: 15px 20px max(20px, env(safe-area-inset-bottom)); background: rgba(15, 23, 42, 0.95); border-top: 2px solid var(--border); }
 
     .card-bio { background: #1e293b; border: 3px solid #334155; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; position: relative; cursor: pointer; transition: transform 0.2s, border-color 0.2s; }
@@ -40,7 +40,16 @@
     .card-bio.disabled { filter: grayscale(1) brightness(0.5); pointer-events: none; }
     .card-bio:active:not(.disabled) { transform: scale(0.95); }
     
-    .c-img { height: 360px; background-size: cover; background-position: center center; border-bottom: 4px solid #334155; position: relative; background-color: #0f172a; overflow: hidden; }
+    .c-img { 
+  height: 250px; 
+  background-size: 122%; /* ¡El truco! Hace un zoom del 22% para sacar la cuadrícula del marco */
+  background-position: center 6%; /* Alinea la imagen ligeramente hacia arriba para no cortar el título dibujado */
+  background-repeat: no-repeat;
+  border-bottom: 3px solid #1e293b; 
+  position: relative; 
+  background-color: #0f172a; 
+  overflow: hidden; 
+}
     .c-cost { position: absolute; top: 4px; right: 4px; background: var(--energy); color: #000; width: 26px; height: 26px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: 900; font-size: 15px; border: 2px solid #000; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
     .c-info { background: #0f172a; padding: 6px; flex: 1; display: flex; flex-direction: column; }
     .c-name { font-size: 13px; font-weight: 900; text-transform: uppercase; color: #f8fafc; margin-bottom: 2px; text-align: center; }
@@ -78,8 +87,8 @@
     .btn-turn:active { transform: translateY(4px); box-shadow: none; }
     
     .hand-container { display: flex; gap: 8px; justify-content: flex-start; overflow-x: auto; padding-bottom: 5px; }
-    .hand-container .card-bio { width: 180px; flex-shrink: 0; }
-    .hand-container .c-img { height: 230px; }
+    .hand-container .card-bio { width: 140px; flex-shrink: 0; }
+    .hand-container .c-img { height: 165px; background-size: 122%; background-position: center 6%; }
     .hand-container .c-bio-desc { display: none; }
     .hand-container .c-mechanic { font-size: 9px; padding: 2px; }
 
