@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>InmunoDeck: Táctica Innata</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --accent: #38bdf8;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --energy: #fbbf24;
+    }
+    * { box-sizing: border-box; touch-action: manipulation; }
+    body {
+      margin: 0;
+      padding: 10px;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* PANTALLA: SELECCIÓN DE MAZO (DRAFT) */
+    #draft-screen {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      text-align: center;
+      justify-content: space-between;
+    }
+    .briefing-box {
+      background: #1e293b;
+      border: 1px solid #334155;
+      padding: 12px;
+      border-radius: 8px;
+    }
+    .draft-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 8px;
+      overflow-y: auto;
+      max-height: 55vh;
+      padding: 4px;
+    }
+    .draft-card {
+      background: #0f172a;
+      border: 2px solid #334155;
+      border-radius: 8px;
+      padding: 8px;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.1s;
+    }
+    .draft-card.selected {
+      border-color: var(--accent);
+      background: #1e293b;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+    }
+
+    /* PANTALLA: ARENA DE COMBATE */
+    #battle-screen {
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+      border-radius: 12px;
+      padding: 10px;
+      transition: background 0.5s ease;
+    }
+    /* Entornos tisulares */
+    .env-piel { background: radial-gradient(circle at center, #7c2d12 0%, #180c06 100%); }
+    .env-mucosa { background: radial-gradient(circle at center, #1e3a8a 0%, #081120 100%); }
+    .env-galt { background: radial-gradient(circle at center, #14532d 0%, #051a0d 100%); }
+
+    .status-panel {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .status-card {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(4px);
+      padding: 8px;
+      border-radius: 8px;
+      flex: 1;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .hp-bar-bg {
+      background: #334155;
+      height: 10px;
+      border-radius: 5px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .hp-bar-fill { height: 100%; transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    #player-bar { background: var(--success); }
+    #enemy-bar { background: var(--danger); }
+
+    .arena-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .enemy-sprite {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.4);
+      border: 3px solid var(--danger);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 45px;
+      margin-bottom: 6px;
+      transition: transform 0.15s;
+    }
+    .shake { animation: shakeAnim 0.3s ease-in-out; }
+    @keyframes shakeAnim {
+      0%, 100% { transform: translate(0, 0); }
+      25% { transform: translate(-8px, 4px); }
+      50% { transform: translate(8px, -4px); }
+      75% { transform: translate(-4px, 2px); }
+    }
+
+    .combat-log {
+      font-size: 12px;
+      min-height: 36px;
+      color: var(--accent);
+      background: rgba(15, 23, 42, 0.75);
+      padding: 6px 12px;
+      border-radius: 6px;
+      max-width: 90%;
+    }
+
+    /* Mano de combate táctil */
+    .hand-container {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .card {
+      flex: 0 0 100px;
+      background: rgba(30, 41, 59, 0.95);
+      border: 2px solid #475569;
+      border-radius: 8px;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+    .card:active { transform: scale(0.95); }
+    .card-cost { font-size: 11px; font-weight: bold; color: var(--energy); text-align: right; }
+    .card-icon { font-size: 26px; text-align: center; margin: 2px 0; }
+    .card-name { font-size: 11px; font-weight: bold; text-align: center; }
+    .card-desc { font-size: 9px; color: #94a3b8; text-align: center; margin-top: 2px; }
+
+    .bottom-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .btn {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn:disabled { background: #475569; opacity: 0.6; }
+  </style>
+</head>
+<body>
+
+  <!-- 1. PANTALLA DE SELECCIÓN (DRAFT) -->
+  <div id="draft-screen">
+    <div class="briefing-box">
+      <h3 id="briefing-title" style="margin: 0 0 4px; color: var(--accent);">Alerta de Invasión</h3>
+      <p id="briefing-text" style="font-size: 12px; margin: 0; color: #cbd5e1;"></p>
+    </div>
+
+    <div>
+      <div style="font-size: 13px; margin-bottom: 6px;">Selecciona 4 cartas para tu respuesta inmune (<span id="selected-count">0</span>/4):</div>
+      <div class="draft-grid" id="draft-grid"></div>
+    </div>
+
+    <button id="start-battle-btn" class="btn" style="width: 100%;" onclick="startCombat()" disabled>Desplegar Defensas</button>
+  </div>
+
+  <!-- 2. PANTALLA DE COMBATE -->
+  <div id="battle-screen">
+    <div class="status-panel">
+      <div class="status-card">
+        <div style="font-size: 11px;">🛡️ Tejido Hospedero</div>
+        <div class="hp-bar-bg"><div id="player-bar" class="hp-bar-fill" style="width: 100%;"></div></div>
+        <div id="player-hp-txt" style="font-size: 10px; margin-top: 2px;">100 / 100</div>
+      </div>
+      <div class="status-card">
+        <div id="enemy-name" style="font-size: 11px;">Patógeno</div>
+        <div class="hp-bar-bg"><div id="enemy-bar" class="hp-bar-fill" style="width: 100%;"></div></div>
+        <div id="enemy-hp-txt" style="font-size: 10px; margin-top: 2px;">100 / 100</div>
+      </div>
+    </div>
+
+    <div class="arena-center">
+      <div id="enemy-sprite" class="enemy-sprite">🧫</div>
+      <div id="combat-log" class="combat-log">Fase de reconocimiento tisular iniciada.</div>
+    </div>
+
+    <div>
+      <div class="bottom-bar">
+        <div id="energy-txt" style="font-weight: bold; color: var(--energy); font-size: 13px;">⚡ ATP: 3 / 3</div>
+        <button class="btn" onclick="endTurn()">Terminar Turno</button>
+      </div>
+      <div class="hand-container" id="hand" style="margin-top: 8px;"></div>
+    </div>
+  </div>
+
+  <script>
+    // --- ESCENARIOS Y ENEMIGOS (ALEATORIO POR PARTIDA) ---
+    const SCENARIOS = [
+      {
+        id: 'piel',
+        name: 'Epidermis (Piel profunda)',
+        envClass: 'env-piel',
+        enemyName: 'Staphylococcus aureus',
+        enemyType: 'bacteria',
+        icon: '🧫',
+        hp: 90,
+        atk: 14,
+        briefing: 'Laceración cutánea. Bacterias Gram (+) colonizando el estrato celular. Muy vulnerable a fagocitosis y lisis por complemento.'
+      },
+      {
+        id: 'mucosa',
+        name: 'Epitelio Respiratorio',
+        envClass: 'env-mucosa',
+        enemyName: 'Virus Influenza A',
+        enemyType: 'virus',
+        icon: '🦠',
+        hp: 80,
+        atk: 18,
+        briefing: 'Infección viral intracelular activa. La fagocitosis común es inútil: se requieren Células NK e Interferón para destruir células infectadas.'
+      },
+      {
+        id: 'galt',
+        name: 'GALT (Mucosa Intestinal)',
+        envClass: 'env-galt',
+        enemyName: 'Helminto Tisular (Ascaris)',
+        enemyType: 'parasite',
+        icon: '🪱',
+        hp: 130,
+        atk: 16,
+        briefing: 'Parásito pluricelular gigante. El tamaño impide la fagocitosis tradicional. Requiere desgranulación por Eosinófilos y respuesta inflamatoria coordinada.'
+      }
+    ];
+
+    // --- POOL GENERAL DE CARTAS DISPONIBLES PARA DRAFT ---
+    const CARD_POOL = [
+      { id: 'neutrofilo', name: 'Neutrófilo', cost: 1, type: 'atk', val: 20, icon: '💥', desc: 'Fagocitosis rápida (-20 HP). Débil vs parásitos/virus.' },
+      { id: 'macrofago', name: 'Macrófago', cost: 2, type: 'atk_heal', val: 15, heal: 15, icon: '🧹', desc: 'Fagocita (-15 HP) y secreta factores reparadores (+15 HP).' },
+      { id: 'nk', name: 'Célula NK', cost: 2, type: 'atk', val: 30, icon: '🎯', desc: 'Granzimas líticas (-30 HP). Crítico letal contra virus.' },
+      { id: 'eosinofilo', name: 'Eosinófilo', cost: 2, type: 'atk', val: 15, icon: '🪓', desc: 'Proteína Básica Mayor (-15 HP). Inflige 3x de daño a helmintos.' },
+      { id: 'complemento', name: 'Complemento', cost: 1, type: 'buff', val: 1.5, icon: '🛡️', desc: 'Opsoniza al patógeno: +50% daño al próximo ataque.' },
+      { id: 'citoquinas', name: 'Inflamación', cost: 1, type: 'recruit', icon: '📢', desc: 'IL-1 / TNF-α: Quimiotaxis. Roba un Neutrófilo coste 0 a tu mano.' },
+      { id: 'interferon', name: 'Interferón α/β', cost: 1, type: 'shield', icon: '🧬', desc: 'Estado antiviral: reduce el próximo ataque del invasor a la mitad.' }
+    ];
+
+    // --- ESTADO GLOBAL ---
+    let currentScenario;
+    let selectedCards = [];
+    let playerHp = 100;
+    let enemyHp = 100;
+    let maxEnemyHp = 100;
+    let energy = 3;
+    let opsonized = false;
+    let shieldActive = false;
+    let activeHand = [];
+
+    // Inicializar Fase de Selección
+    function initDraft() {
+      currentScenario = SCENARIOS[Math.floor(Math.random() * SCENARIOS.length)];
+      document.getElementById('briefing-title').innerText = `🚨 Alerta en: ${currentScenario.name}`;
+      document.getElementById('briefing-text').innerText = currentScenario.briefing;
+
+      const grid = document.getElementById('draft-grid');
+      grid.innerHTML = '';
+      CARD_POOL.forEach(card => {
+        const d = document.createElement('div');
+        d.className = 'draft-card';
+        d.innerHTML = `
+          <div style="display:flex; justify-content:space-between;">
+            <span style="font-weight:bold; font-size:12px;">${card.name}</span>
+            <span style="color:var(--energy); font-size:11px;">${card.cost} ⚡</span>
+          </div>
+          <div style="font-size:20px; text-align:center; margin:4px 0;">${card.icon}</div>
+          <div style="font-size:10px; color:#94a3b8;">${card.desc}</div>
+        `;
+        d.onclick = () => toggleSelectCard(card, d);
+        grid.appendChild(d);
+      });
+    }
+
+    function toggleSelectCard(card, element) {
+      const idx = selectedCards.findIndex(c => c.id === card.id);
+      if (idx > -1) {
+        selectedCards.splice(idx, 1);
+        element.classList.remove('selected');
+      } else {
+        if (selectedCards.length < 4) {
+          selectedCards.push(card);
+          element.classList.add('selected');
+        }
+      }
+      document.getElementById('selected-count').innerText = selectedCards.length;
+      document.getElementById('start-battle-btn').disabled = (selectedCards.length !== 4);
+    }
+
+    // Iniciar Combate
+    function startCombat() {
+      document.getElementById('draft-screen').style.display = 'none';
+      const bScreen = document.getElementById('battle-screen');
+      bScreen.style.display = 'flex';
+      bScreen.classList.add(currentScenario.envClass);
+
+      enemyHp = currentScenario.hp;
+      maxEnemyHp = currentScenario.hp;
+      document.getElementById('enemy-name').innerText = currentScenario.enemyName;
+      document.getElementById('enemy-sprite').innerText = currentScenario.icon;
+
+      activeHand = [...selectedCards];
+      renderHand();
+      updateUI();
+    }
+
+    function renderHand() {
+      const container = document.getElementById('hand');
+      container.innerHTML = '';
+      activeHand.forEach((card, index) => {
+        const c = document.createElement('div');
+        c.className = 'card';
+        c.onclick = () => playCard(card, index);
+        c.innerHTML = `
+          <div class="card-cost">${card.cost} ⚡</div>
+          <div class="card-icon">${card.icon}</div>
+          <div class="card-name">${card.name}</div>
+          <div class="card-desc">${card.desc}</div>
+        `;
+        container.appendChild(c);
+      });
+    }
+
+    // Resolución de Cartas con Biología Condicional
+    function playCard(card, index) {
+      if (enemyHp <= 0 || playerHp <= 0) return;
+      if (energy < card.cost) {
+        log("⚠️ ATP insuficiente para reclutar esta molécula/célula.");
+        return;
+      }
+
+      energy -= card.cost;
+
+      // 1. Ataques
+      if (card.type === 'atk') {
+        let dmg = card.val;
+
+        // Efectividad biológica condicionada
+        if (card.id === 'eosinofilo' && currentScenario.enemyType === 'parasite') {
+          dmg = 45; // Crítico biológico por Proteína Básica Mayor
+          log("¡Eosinófilo liberó Proteína Básica Mayor! Daño demoledor sobre el helminto (-45 HP).");
+        } else if (card.id === 'nk' && currentScenario.enemyType === 'virus') {
+          dmg = 50; // Crítico biológico por ausencia de MHC-I
+          log("¡NK detectó células infectadas sin MHC-I y secretó granzimas masivas (-50 HP)!");
+        } else if (card.id === 'neutrofilo' && currentScenario.enemyType === 'parasite') {
+          dmg = 5; // Fracaso biológico: el parásito es gigante
+          log("El parásito es gigante: el Neutrófilo no logra fagocitarlo (Apenas -5 HP).");
+        } else {
+          log(`¡${card.name} atacó con éxito al invasor causando -${dmg} HP!`);
+        }
+
+        if (opsonized) {
+          dmg = Math.round(dmg * 1.5);
+          opsonized = false;
+          log(`¡Lisis facilitada por Opsonización! Daño potenciado a -${dmg} HP.`);
+        }
+
+        applyDamage(dmg);
+      }
+      // 2. Ataque + Curación
+      else if (card.type === 'atk_heal') {
+        let dmg = card.val;
+        if (currentScenario.enemyType === 'parasite') dmg = 5;
+        applyDamage(dmg);
+        playerHp = Math.min(100, playerHp + card.heal);
+        log(`¡${card.name} fagocitó (-${dmg} HP) y activó regeneración de barrera (+${card.heal} HP)!`);
+      }
+      // 3. Cascada del Complemento
+      else if (card.type === 'buff') {
+        opsonized = true;
+        log("¡Complemento activado! Revestimiento con C3b: el invasor queda vulnerable (+50% daño).");
+      }
+      // 4. Inflamación / Citoquinas
+      else if (card.type === 'recruit') {
+        activeHand.push({ id: 'neutrofilo', name: 'Neutrófilo Expreso', cost: 0, type: 'atk', val: 20, icon: '💥', desc: 'Reclutado por quimiotaxis (-20 HP coste 0).' });
+        renderHand();
+        log("¡Citoquinas (TNF-α/IL-1) secretadas! Diapédesis rápida: neutrófilo añadido a coste 0.");
+      }
+      // 5. Interferón
+      else if (card.type === 'shield') {
+        shieldActive = true;
+        log("¡Interferón secretado! Las células vecinas entran en estado de resistencia antiviral.");
+      }
+
+      triggerShake();
+      updateUI();
+    }
+
+    function applyDamage(dmg) {
+      enemyHp = Math.max(0, enemyHp - dmg);
+      if (enemyHp === 0) {
+        log(`🏆 ¡Victoria inmune! Amenaza neutralizada en ${currentScenario.name}.`);
+      }
+    }
+
+    function triggerShake() {
+      const sprite = document.getElementById('enemy-sprite');
+      sprite.classList.remove('shake');
+      void sprite.offsetWidth; // Forzar reflow para reiniciar animación CSS
+      sprite.classList.add('shake');
+    }
+
+    // Turno del Invasor
+    function endTurn() {
+      if (enemyHp <= 0 || playerHp <= 0) return;
+
+      let enemyDamage = currentScenario.atk;
+      if (shieldActive) {
+        enemyDamage = Math.round(enemyDamage / 2);
+        shieldActive = false;
+        log(`🛡️ Estado antiviral redujo el daño del patógeno a la mitad (-${enemyDamage} HP).`);
+      } else {
+        log(`🚨 ¡${currentScenario.enemyName} contraataca causando ${enemyDamage} de daño tisular!`);
+      }
+
+      playerHp = Math.max(0, playerHp - enemyDamage);
+      energy = 3;
+
+      if (playerHp === 0) {
+        log("💀 Falla multiorgánica: la infección superó a la inmunidad innata.");
+      }
+
+      updateUI();
+    }
+
+    function log(msg) {
+      document.getElementById('combat-log').innerText = msg;
+    }
+
+    function updateUI() {
+      document.getElementById('player-bar').style.width = playerHp + '%';
+      document.getElementById('player-hp-txt').innerText = `${playerHp} / 100`;
+
+      const enemyPct = Math.round((enemyHp / maxEnemyHp) * 100);
+      document.getElementById('enemy-bar').style.width = enemyPct + '%';
+      document.getElementById('enemy-hp-txt').innerText = `${enemyHp} / ${maxEnemyHp}`;
+
+      document.getElementById('energy-txt').innerText = `⚡ ATP: ${energy} / 3`;
+    }
+
+    // Ejecución inicial
+    initDraft();
+  </script>
+</body>
+</html>
