@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>InmunoDeck: Defensa Innata</title>
+  <title>InmunoDeck: Defensa Innata Avanzada</title>
   <style>
     :root {
       --bg-dark: #050b14;
@@ -11,7 +11,7 @@
       --danger: #ef4444;
       --success: #22c55e;
       --energy: #fbbf24;
-      --panel: rgba(15, 23, 42, 0.85);
+      --panel: rgba(15, 23, 42, 0.9);
       --border: #334155;
     }
     
@@ -20,7 +20,6 @@
     body {
       background-color: #000;
       color: white;
-      /* Uso de dvh para asegurar que el iPad no corte el contenido */
       height: 100dvh; 
       width: 100vw;
       overflow: hidden;
@@ -34,7 +33,7 @@
       background: var(--bg-dark);
     }
 
-    /* --- SISTEMA DE TRANSICIÓN FLUIDA ENTRE PANTALLAS --- */
+    /* --- SISTEMA DE TRANSICIÓN --- */
     .screen {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -46,35 +45,34 @@
       background-size: cover;
       background-position: center;
     }
-    .screen.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
+    .screen.active { opacity: 1; pointer-events: auto; }
 
     /* --- PANTALLA 1: DRAFT --- */
-    #draft-screen {
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    }
+    #draft-screen { background: linear-gradient(135deg, #091325 0%, #1e293b 100%); }
+    
     .draft-header {
       flex: 0 0 auto;
-      padding: 20px;
+      padding: 15px 20px;
       text-align: center;
-      background: rgba(0,0,0,0.3);
-      border-bottom: 2px solid var(--border);
+      background: rgba(0, 0, 0, 0.6);
+      border-bottom: 3px solid var(--danger);
+      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
     }
-    .draft-title { font-size: 28px; font-weight: 900; color: var(--accent); letter-spacing: 1px; }
+    .draft-title { font-size: 26px; font-weight: 900; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
     
-    /* Contenedor flexible con scroll interno para iPad/Móvil */
-    .draft-body {
-      flex: 1 1 auto;
-      overflow-y: auto;
-      padding: 20px;
+    /* Panel de Inteligencia del Patógeno */
+    .pathogen-intel {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid var(--danger);
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 5px;
     }
-    .draft-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-      gap: 15px;
-    }
+    .pathogen-name { font-size: 18px; font-weight: 900; color: var(--danger); text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .pathogen-vuln { font-size: 13px; color: #cbd5e1; margin-top: 5px; line-height: 1.4; font-weight: 500; }
+    
+    .draft-body { flex: 1 1 auto; overflow-y: auto; padding: 15px; }
+    .draft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
     
     .draft-footer {
       flex: 0 0 auto;
@@ -84,69 +82,69 @@
       box-shadow: 0 -10px 20px rgba(0,0,0,0.5);
     }
 
-    /* Cartas con Imágenes Biológicas */
+    /* Cartas Biológicas (Diseño Avanzado) */
     .card-bio {
       background: #1e293b;
       border: 3px solid #334155;
-      border-radius: 12px;
+      border-radius: 10px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       position: relative;
       cursor: pointer;
       transition: transform 0.2s, border-color 0.2s;
-      aspect-ratio: 3 / 4;
     }
     .card-bio.selected { border-color: var(--success); box-shadow: 0 0 15px rgba(34, 197, 94, 0.6); transform: translateY(-4px); }
     .card-bio.disabled { filter: grayscale(1) brightness(0.5); pointer-events: none; }
     .card-bio:active:not(.disabled) { transform: scale(0.95); }
     
     .c-img {
-      flex: 1;
+      height: 90px;
       background-size: cover;
       background-position: center;
-      position: relative;
       border-bottom: 2px solid #334155;
+      position: relative;
     }
     .c-cost {
-      position: absolute; top: 5px; right: 5px;
+      position: absolute; top: 4px; right: 4px;
       background: var(--energy); color: #000;
-      width: 28px; height: 28px; border-radius: 50%;
+      width: 26px; height: 26px; border-radius: 50%;
       display: flex; justify-content: center; align-items: center;
-      font-weight: 900; font-size: 16px; border: 2px solid #000;
+      font-weight: 900; font-size: 15px; border: 2px solid #000;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }
-    .c-info {
-      background: #0f172a; padding: 8px 5px; text-align: center;
-    }
-    .c-name { font-size: 13px; font-weight: 800; text-transform: uppercase; margin-bottom: 2px; }
-    .c-desc { font-size: 10px; color: #94a3b8; line-height: 1.2; }
+    .c-info { background: #0f172a; padding: 8px; flex: 1; display: flex; flex-direction: column; }
+    .c-name { font-size: 14px; font-weight: 900; text-transform: uppercase; color: #f8fafc; margin-bottom: 4px; text-align: center; }
+    .c-bio-desc { font-size: 10px; color: #94a3b8; line-height: 1.3; margin-bottom: 6px; font-style: italic; text-align: center; }
+    .c-mechanic { font-size: 11px; color: var(--accent); font-weight: 700; line-height: 1.2; text-align: center; background: rgba(56, 189, 248, 0.1); padding: 4px; border-radius: 4px; margin-top: auto; }
 
     .btn-main {
       width: 100%; background: var(--success); color: white; border: none; padding: 18px;
       border-radius: 12px; font-weight: 900; font-size: 20px; text-transform: uppercase;
-      transition: background 0.2s;
+      transition: background 0.2s; box-shadow: 0 6px 0 #166534;
     }
-    .btn-main:disabled { background: #475569; opacity: 0.5; }
+    .btn-main:active { transform: translateY(4px); box-shadow: none; }
+    .btn-main:disabled { background: #475569; opacity: 0.5; box-shadow: 0 6px 0 #1e293b; }
 
     /* --- PANTALLA 2: COMBATE --- */
     #battle-overlay {
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.8) 100%);
+      background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.85) 100%);
       z-index: 1;
     }
     .battle-ui { position: relative; z-index: 2; display: flex; flex-direction: column; height: 100%; }
     
     .hud-top { flex: 0 0 auto; padding: 15px max(15px, env(safe-area-inset-left)); }
-    .env-title { font-size: 32px; font-weight: 900; text-align: center; color: var(--accent); text-shadow: 2px 2px 4px #000; text-transform: uppercase; margin-bottom: 10px; }
+    .env-title-battle { font-size: 30px; font-weight: 900; text-align: center; color: var(--accent); text-shadow: 2px 2px 4px #000; text-transform: uppercase; margin-bottom: 12px; }
     
     .bars-container { display: flex; justify-content: space-between; gap: 15px; }
-    .bar-wrapper { flex: 1; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 10px; border: 1px solid var(--border); }
-    .bar-label { font-size: 14px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
-    .bar-bg { background: #1e293b; height: 24px; border-radius: 12px; overflow: hidden; position: relative; border: 2px solid #000; }
-    .bar-fill { height: 100%; transition: width 0.4s ease-out; }
-    #player-bar { background: var(--success); }
-    #enemy-bar { background: var(--danger); }
-    .bar-text { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; font-size: 14px; font-weight: 900; text-shadow: 1px 1px 2px #000; }
+    .bar-wrapper { flex: 1; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 10px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.5); }
+    .bar-label { font-size: 13px; font-weight: 900; text-transform: uppercase; margin-bottom: 5px; }
+    .bar-bg { background: #1e293b; height: 26px; border-radius: 13px; overflow: hidden; position: relative; border: 2px solid #000; }
+    .bar-fill { height: 100%; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+    #player-bar { background: linear-gradient(90deg, #16a34a, #22c55e); }
+    #enemy-bar { background: linear-gradient(90deg, #dc2626, #ef4444); }
+    .bar-text { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; font-size: 15px; font-weight: 900; text-shadow: 1px 1px 2px #000; }
 
     /* Arena Central */
     .arena { flex: 1 1 auto; display: flex; justify-content: center; align-items: center; position: relative; }
@@ -155,55 +153,66 @@
       border-radius: 50%;
       background-size: cover; background-position: center;
       border: 4px solid var(--danger);
-      box-shadow: 0 0 40px rgba(239, 68, 68, 0.5);
-      animation: breathe 4s ease-in-out infinite;
+      box-shadow: 0 0 50px rgba(239, 68, 68, 0.6);
+      animation: breathe 3.5s ease-in-out infinite;
       position: relative;
     }
     
     /* HUD Inferior */
     .hud-bottom {
       flex: 0 0 auto;
-      background: rgba(0,0,0,0.8);
-      padding: 15px 15px max(15px, env(safe-area-inset-bottom));
+      background: rgba(0,0,0,0.85);
+      padding: 12px 15px max(12px, env(safe-area-inset-bottom));
       border-top: 2px solid var(--border);
     }
-    .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .energy-display { font-size: 24px; font-weight: 900; color: var(--energy); display: flex; align-items: center; gap: 8px; }
-    .btn-turn { background: #3b82f6; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 900; font-size: 16px; text-transform: uppercase; }
-    .hand-container { display: flex; gap: 10px; justify-content: center; height: 180px; }
+    .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .energy-display { font-size: 24px; font-weight: 900; color: var(--energy); display: flex; align-items: center; gap: 8px; text-shadow: 1px 1px 2px #000; }
+    .energy-icon { font-size: 28px; filter: drop-shadow(0 0 5px var(--energy)); }
+    .btn-turn { background: #3b82f6; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 900; font-size: 16px; text-transform: uppercase; box-shadow: 0 4px 0 #1d4ed8; }
+    .btn-turn:active { transform: translateY(4px); box-shadow: none; }
+    
+    .hand-container { display: flex; gap: 10px; justify-content: center; height: 185px; }
+
+    /* Variante de cartas para la mano en batalla (más compacta pero descriptiva) */
+    .hand-container .card-bio { width: 120px; flex-shrink: 0; }
+    .hand-container .c-img { height: 75px; }
+    .hand-container .c-bio-desc { display: none; } /* Ocultamos la bio extensa en batalla para ganar espacio */
 
     /* --- ANIMACIONES Y ESTADOS --- */
-    @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+    @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
     
     .turn-announcer {
       position: absolute; top: 40%; left: -100vw; width: 100vw;
-      background: rgba(220, 38, 38, 0.9); padding: 20px 0;
-      text-align: center; font-size: 36px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-      z-index: 100;
+      background: rgba(220, 38, 38, 0.95); padding: 25px 0;
+      text-align: center; font-size: 38px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.9);
+      z-index: 100; text-shadow: 2px 2px 0 #000;
       transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
     .turn-announcer.show { transform: translateX(0); }
     .turn-announcer.hide { transform: translateX(100vw); }
 
     .fct {
-      position: absolute; z-index: 50; font-size: 45px; font-weight: 900; text-shadow: 2px 2px 0 #000, -2px -2px 0 #000;
-      pointer-events: none; animation: floatUp 1.2s ease-out forwards;
+      position: absolute; z-index: 50; font-size: 50px; font-weight: 900; text-shadow: 3px 3px 0 #000, -2px -2px 0 #000;
+      pointer-events: none; animation: floatUp 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
     }
-    @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(0.5); } 20% { transform: translateY(-40px) scale(1.2); } 100% { opacity: 0; transform: translateY(-100px) scale(1); } }
+    @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(0.5); } 20% { transform: translateY(-50px) scale(1.3); } 100% { opacity: 0; transform: translateY(-120px) scale(1); } }
 
     .shake { animation: shakeAnim 0.4s cubic-bezier(.36,.07,.19,.97) both; }
-    @keyframes shakeAnim { 10%, 90% { transform: translate3d(-6px, 0, 0); } 20%, 80% { transform: translate3d(10px, 0, 0); filter: brightness(2) saturate(3); } 30%, 50%, 70% { transform: translate3d(-14px, 0, 0); } 40%, 60% { transform: translate3d(14px, 0, 0); } }
+    @keyframes shakeAnim { 10%, 90% { transform: translate3d(-6px, 0, 0); } 20%, 80% { transform: translate3d(12px, 0, 0); filter: brightness(2) saturate(3); } 30%, 50%, 70% { transform: translate3d(-15px, 0, 0); } 40%, 60% { transform: translate3d(15px, 0, 0); } }
 
-    /* Pantallas de Fin de Juego */
+    .damage-flash { animation: screenFlash 0.5s ease-out forwards; }
+    @keyframes screenFlash { 0% { box-shadow: inset 0 0 0 0 transparent; } 50% { box-shadow: inset 0 0 150px 60px rgba(239,68,68,0.9); } 100% { box-shadow: inset 0 0 0 0 transparent; } }
+
+    /* Modal Fin de Juego */
     .modal-overlay {
-      position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 200;
+      position: absolute; inset: 0; background: rgba(0,0,0,0.92); z-index: 200;
       display: flex; flex-direction: column; justify-content: center; align-items: center;
-      opacity: 0; pointer-events: none; transition: opacity 0.5s ease;
+      opacity: 0; pointer-events: none; transition: opacity 0.5s ease; padding: 20px;
     }
     .modal-overlay.active { opacity: 1; pointer-events: auto; }
-    .modal-title { font-size: 50px; font-weight: 900; text-transform: uppercase; margin-bottom: 20px; text-shadow: 0 0 20px currentColor; }
-    .modal-desc { font-size: 18px; color: #cbd5e1; text-align: center; max-width: 80%; line-height: 1.5; margin-bottom: 30px; }
+    .modal-title { font-size: 45px; font-weight: 900; text-transform: uppercase; margin-bottom: 20px; text-shadow: 0 0 25px currentColor; text-align: center; line-height: 1.1; }
+    .modal-desc { font-size: 20px; color: #e2e8f0; text-align: center; max-width: 90%; line-height: 1.5; margin-bottom: 40px; }
   </style>
 </head>
 <body>
@@ -214,13 +223,17 @@
     <div id="draft-screen" class="screen active">
       <div class="draft-header">
         <div class="draft-title" id="draft-tissue-name">ANALIZANDO TEJIDO...</div>
-        <div style="font-size: 15px; color: #94a3b8; margin-top: 5px;">Ensambla tu respuesta inmune (<span id="draft-count">0</span>/4)</div>
+        <div class="pathogen-intel">
+          <div class="pathogen-name">🚨 <span id="draft-pathogen-name"></span></div>
+          <div class="pathogen-vuln" id="draft-vulnerability"></div>
+        </div>
       </div>
       <div class="draft-body">
+        <div style="font-size: 14px; color: #94a3b8; margin-bottom: 10px; font-weight: bold; text-align: center;">Ensambla tu respuesta inmune táctica (<span id="draft-count">0</span>/4 cartas)</div>
         <div class="draft-grid" id="draft-grid"></div>
       </div>
       <div class="draft-footer">
-        <button id="btn-start" class="btn-main" disabled onclick="transitionToBattle()">INICIAR RESPUESTA INMUNE</button>
+        <button id="btn-start" class="btn-main" disabled onclick="transitionToBattle()">Desplegar Defensas</button>
       </div>
     </div>
 
@@ -230,10 +243,10 @@
       <div class="battle-ui">
         
         <div class="hud-top">
-          <div class="env-title" id="env-title">Epidermis</div>
+          <div class="env-title-battle" id="env-title">Epidermis</div>
           <div class="bars-container">
             <div class="bar-wrapper">
-              <div class="bar-label" style="color: var(--success);">Integridad Tisular</div>
+              <div class="bar-label" style="color: var(--success);">Integridad Tisular (Hospedero)</div>
               <div class="bar-bg">
                 <div id="player-bar" class="bar-fill"></div>
                 <div id="player-hp-txt" class="bar-text">100/100</div>
@@ -255,8 +268,8 @@
 
         <div class="hud-bottom">
           <div class="controls">
-            <div class="energy-display">ATP: <span id="energy-val">3</span></div>
-            <button id="btn-end-turn" class="btn-turn" onclick="startEnemyTurn()">Fin de Turno</button>
+            <div class="energy-display"><span class="energy-icon">⚡</span> ATP: <span id="energy-val">3</span></div>
+            <button id="btn-end-turn" class="btn-turn" onclick="startEnemyTurn()">Pasar Turno</button>
           </div>
           <div class="hand-container" id="battle-hand"></div>
         </div>
@@ -270,60 +283,74 @@
     <div id="end-modal" class="modal-overlay">
       <div id="end-title" class="modal-title"></div>
       <div id="end-desc" class="modal-desc"></div>
-      <button class="btn-turn" style="padding: 15px 30px; font-size: 20px;" onclick="location.reload()">NUEVA INFECCIÓN</button>
+      <button class="btn-turn" style="padding: 18px 35px; font-size: 22px; box-shadow: 0 6px 0 #1d4ed8;" onclick="location.reload()">ATENDER NUEVA INFECCIÓN</button>
     </div>
 
   </div>
 
   <script>
     /* 
-      BASE DE DATOS DE IMÁGENES BIOLÓGICAS (Puedes reemplazar las URLs por "./img/tu_archivo.jpg")
-      Se usan recursos representativos de alta calidad de microscopía y biología abstracta.
+      ENLACES DE WIKIMEDIA COMMONS (Estables, científicos y libres)
+      Reemplazan los iconos genéricos por microfotografías reales o diagramas médicos.
     */
     const IMG = {
-      neutrofilo: 'https://images.unsplash.com/photo-1579303914800-474cbdb54784?auto=format&fit=crop&w=400&q=80',
-      macrofago: 'https://images.unsplash.com/photo-1530026405186-ed1f139313f8?auto=format&fit=crop&w=400&q=80',
-      nk: 'https://images.unsplash.com/photo-1614947936181-422f254f1647?auto=format&fit=crop&w=400&q=80',
-      eosinofilo: 'https://images.unsplash.com/photo-1583912265924-a8eda0e2817f?auto=format&fit=crop&w=400&q=80',
-      complemento: 'https://images.unsplash.com/photo-1618055627685-61019d08e505?auto=format&fit=crop&w=400&q=80',
-      interferon: 'https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&w=400&q=80',
+      neutrofilo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Blausen_0676_Neutrophil.png/400px-Blausen_0676_Neutrophil.png',
+      macrofago: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Phagocytosis2.png/400px-Phagocytosis2.png',
+      nk: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Natural_Killer_Cell.png/400px-Natural_Killer_Cell.png',
+      eosinofilo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Blausen_0352_Eosinophil_%28crop%29.png/400px-Blausen_0352_Eosinophil_%28crop%29.png',
+      complemento: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Complement_system.png/400px-Complement_system.png',
+      interferon: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Interferon_signaling.png/400px-Interferon_signaling.png',
       
-      bgPiel: 'https://images.unsplash.com/photo-1612441804231-77a36b284856?auto=format&fit=crop&w=1200&q=80',
-      bgMucosa: 'https://images.unsplash.com/photo-1584036561566-baf8f5f1b144?auto=format&fit=crop&w=1200&q=80',
-      bgGalt: 'https://images.unsplash.com/photo-1559523161-0fc0d8b38a7a?auto=format&fit=crop&w=1200&q=80',
+      bgPiel: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Normal_Epidermis_and_Dermis_with_Intradermal_Nevus_10x.JPG/1200px-Normal_Epidermis_and_Dermis_with_Intradermal_Nevus_10x.JPG',
+      bgMucosa: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Respiratory_epithelium_%281%29.jpg/1200px-Respiratory_epithelium_%281%29.jpg',
+      bgGalt: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Ileum-microvilli.jpg/1200px-Ileum-microvilli.jpg',
       
-      pathoBact: 'https://images.unsplash.com/photo-1628527304948-0615f3e9ea7a?auto=format&fit=crop&w=400&q=80',
-      pathoVirus: 'https://images.unsplash.com/photo-1583324113626-70df0f4deaab?auto=format&fit=crop&w=400&q=80',
-      pathoHelm: 'https://images.unsplash.com/photo-1518349619113-03114f06124a?auto=format&fit=crop&w=400&q=80'
+      pathoBact: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Staphylococcus_aureus%2C_50%2C000x%2C_USDA%2C_ARS%2C_EMU.jpg/400px-Staphylococcus_aureus%2C_50%2C000x%2C_USDA%2C_ARS%2C_EMU.jpg',
+      pathoVirus: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/H1N1_navbox.jpg/400px-H1N1_navbox.jpg',
+      pathoHelm: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Ascaris_lumbricoides.jpeg/400px-Ascaris_lumbricoides.jpeg'
     };
 
     const SCENARIOS = [
-      { id: 'piel', name: 'Epidermis Subcutánea', enemy: 'Staphylococcus aureus', type: 'bacteria', hp: 120, atk: 18, bg: IMG.bgPiel, avatar: IMG.pathoBact },
-      { id: 'mucosa', name: 'Epitelio Respiratorio', enemy: 'Orthomyxovirus', type: 'virus', hp: 90, atk: 25, bg: IMG.bgMucosa, avatar: IMG.pathoVirus },
-      { id: 'galt', name: 'GALT Intestinal', enemy: 'Ascaris lumbricoides', type: 'helminto', hp: 160, atk: 15, bg: IMG.bgGalt, avatar: IMG.pathoHelm }
+      { id: 'piel', name: 'Epidermis Subcutánea', enemy: 'Staphylococcus aureus', type: 'bacteria', hp: 130, atk: 20, bg: IMG.bgPiel, avatar: IMG.pathoBact, 
+        vuln: 'Vulnerabilidad táctica: Altamente susceptible a fagocitosis directa y lisis por Complejo de Ataque a Membrana (Complemento).' },
+      { id: 'mucosa', name: 'Epitelio Respiratorio', enemy: 'Orthomyxovirus (Influenza)', type: 'virus', hp: 100, atk: 28, bg: IMG.bgMucosa, avatar: IMG.pathoVirus,
+        vuln: 'Vulnerabilidad táctica: Patógeno intracelular. Evade fagocitosis celular. Requiere Células NK (apoptosis) e Interferón (bloqueo viral).' },
+      { id: 'galt', name: 'Mucosa Intestinal (GALT)', enemy: 'Ascaris lumbricoides', type: 'helminto', hp: 180, atk: 18, bg: IMG.bgGalt, avatar: IMG.pathoHelm,
+        vuln: 'Vulnerabilidad táctica: Macroparásito. Su gran tamaño bloquea fagocitosis. Extremadamente vulnerable a la desgranulación extracelular de Eosinófilos.' }
     ];
 
     const CARDS = [
-      { id: 'neutro', name: 'Neutrófilo', cost: 1, type: 'atk', val: 30, img: IMG.neutrofilo, desc: 'Fagocitosis directa. Falla contra macroparásitos.' },
-      { id: 'macro', name: 'Macrófago', cost: 2, type: 'atk_heal', val: 20, heal: 15, img: IMG.macrofago, desc: 'Fagocitosis y reparación de daño tisular.' },
-      { id: 'nk', name: 'Célula NK', cost: 2, type: 'atk', val: 40, img: IMG.nk, desc: 'Apoptosis vía perforinas. Letal vs Virus intracelulares.' },
-      { id: 'eosino', name: 'Eosinófilo', cost: 2, type: 'atk', val: 25, img: IMG.eosinofilo, desc: 'Desgranulación de Proteína Básica Mayor.' },
-      { id: 'comp', name: 'Complemento', cost: 1, type: 'buff', img: IMG.complemento, desc: 'Opsonización (C3b). +50% al siguiente ataque.' },
-      { id: 'ifn', name: 'Interferón α/β', cost: 1, type: 'shield', img: IMG.interferon, desc: 'Estado antiviral: divide a la mitad el ataque enemigo.' }
+      { id: 'neutro', name: 'Neutrófilo', cost: 1, type: 'atk', val: 30, img: IMG.neutrofilo, 
+        bio: 'Leucocito polimorfonuclear. Primera línea de defensa celular.', mechanic: 'Daño: 30. Ineficaz contra helmintos.' },
+      { id: 'macro', name: 'Macrófago', cost: 2, type: 'atk_heal', val: 20, heal: 15, img: IMG.macrofago, 
+        bio: 'Fagocito profesional residente. Elimina detritos y secreta citocinas.', mechanic: 'Daño: 20 | Curación: +15 HP tisular.' },
+      { id: 'nk', name: 'Célula NK', cost: 2, type: 'atk', val: 40, img: IMG.nk, 
+        bio: 'Linfocito innato que detecta ausencia de MHC-I.', mechanic: 'Daño: 40. Crítico (x2) contra virus.' },
+      { id: 'eosino', name: 'Eosinófilo', cost: 2, type: 'atk', val: 25, img: IMG.eosinofilo, 
+        bio: 'Granulocito especializado con Proteína Básica Mayor.', mechanic: 'Daño: 25. Letal (x3) contra helmintos.' },
+      { id: 'comp', name: 'Complemento', cost: 1, type: 'buff', img: IMG.complemento, 
+        bio: 'Cascada proteica plasmática. Facilita la opsonización.', mechanic: 'Marca al patógeno: +50% al siguiente daño.' },
+      { id: 'ifn', name: 'Interferón α/β', cost: 1, type: 'shield', img: IMG.interferon, 
+        bio: 'Citocina que induce estado de resistencia antiviral en células.', mechanic: 'Reduce el ataque enemigo a la mitad 1 turno.' }
     ];
 
     let currentScen = null;
     let deck = [];
     let playerHp = 100, enemyHp = 100, maxEnemyHp = 100;
     let atp = 3;
-    let turnState = 'PLAYER'; // PLAYER, ENEMY, GAMEOVER
+    let turnState = 'PLAYER';
     let opsonized = false, shielded = false;
 
     /* --- INICIALIZACIÓN --- */
     function initApp() {
       currentScen = SCENARIOS[Math.floor(Math.random() * SCENARIOS.length)];
-      document.getElementById('draft-tissue-name').innerText = currentScen.name;
       
+      // Llenar Briefing
+      document.getElementById('draft-tissue-name').innerText = currentScen.name;
+      document.getElementById('draft-pathogen-name').innerText = `${currentScen.enemy} (${currentScen.type.toUpperCase()})`;
+      document.getElementById('draft-vulnerability').innerText = currentScen.vuln;
+      
+      // Renderizar Cuadrícula de Selección
       const grid = document.getElementById('draft-grid');
       CARDS.forEach(c => {
         const el = document.createElement('div');
@@ -333,7 +360,8 @@
           <div class="c-cost">${c.cost}</div>
           <div class="c-info">
             <div class="c-name">${c.name}</div>
-            <div class="c-desc">${c.desc}</div>
+            <div class="c-bio-desc">${c.bio}</div>
+            <div class="c-mechanic">${c.mechanic}</div>
           </div>
         `;
         el.onclick = () => toggleSelection(c, el);
@@ -370,7 +398,7 @@
       updateBattleUI();
     }
 
-    /* --- LÓGICA DE COMBATE Y RENDERIZADO VISUAL --- */
+    /* --- LÓGICA DE COMBATE --- */
     function updateBattleUI() {
       document.getElementById('player-bar').style.width = `${Math.max(0, playerHp)}%`;
       document.getElementById('player-hp-txt').innerText = `${Math.max(0, playerHp)} / 100`;
@@ -387,11 +415,13 @@
         const el = document.createElement('div');
         const isDisabled = turnState !== 'PLAYER' || atp < c.cost;
         el.className = `card-bio ${isDisabled ? 'disabled' : ''}`;
-        el.style.width = '120px';
         el.innerHTML = `
           <div class="c-img" style="background-image: url('${c.img}')"></div>
           <div class="c-cost">${c.cost}</div>
-          <div class="c-info"><div class="c-name" style="font-size:11px;">${c.name}</div></div>
+          <div class="c-info">
+            <div class="c-name">${c.name}</div>
+            <div class="c-mechanic">${c.mechanic}</div>
+          </div>
         `;
         el.onclick = (e) => executePlayerAction(c, el, e);
         hand.appendChild(el);
@@ -413,10 +443,10 @@
       if (card.type.includes('atk')) {
         let dmg = card.val;
         
-        // Reglas estrictas de biología
+        // Multiplicadores y Resistencias Biológicas
         if (card.id === 'eosino' && currentScen.type === 'helminto') dmg *= 3;
         else if (card.id === 'nk' && currentScen.type === 'virus') dmg *= 2;
-        else if (card.id === 'neutro' && currentScen.type === 'helminto') dmg = 5; // Macroparásito evade fagocitosis
+        else if (card.id === 'neutro' && currentScen.type === 'helminto') dmg = 5;
 
         if (opsonized) { dmg = Math.floor(dmg * 1.5); opsonized = false; }
         
@@ -426,7 +456,7 @@
 
         if (card.heal) {
           playerHp = Math.min(100, playerHp + card.heal);
-          spawnText(`+${card.heal}`, '#22c55e', cX, cY + 40);
+          spawnText(`+${card.heal}`, '#22c55e', cX, cY + 50);
         }
       } 
       else if (card.type === 'buff') {
@@ -435,15 +465,15 @@
       } 
       else if (card.type === 'shield') {
         shielded = true;
-        spawnText("IFN: ANTIVIRAL", '#38bdf8', cX, cY);
+        spawnText("ESTADO ANTIVIRAL", '#38bdf8', cX, cY);
       }
 
       updateBattleUI();
 
       if (enemyHp <= 0) {
-        endGame('VICTORIA INMUNOLÓGICA', 'Las barreras innatas neutralizaron la amenaza antes de requerir linfocitos adaptativos.', '#22c55e');
+        endGame('VICTORIA INMUNOLÓGICA', 'Infección erradicada. La barrera innata protegió el tejido exitosamente sin requerir respuesta adaptativa.', '#22c55e');
       } else if (atp === 0) {
-        setTimeout(startEnemyTurn, 800);
+        setTimeout(startEnemyTurn, 1000);
       }
     }
 
@@ -452,10 +482,10 @@
       turnState = 'ENEMY';
       updateBattleUI();
 
-      // Animación de cartel
       const announcer = document.getElementById('turn-announcer');
-      announcer.innerText = "TURNO DEL PATÓGENO";
-      announcer.style.background = "rgba(220, 38, 38, 0.9)";
+      announcer.innerText = `TURNO DE ${currentScen.enemy.toUpperCase()}`;
+      announcer.style.background = "rgba(220, 38, 38, 0.95)";
+      announcer.style.color = "#fff";
       announcer.classList.remove('hide');
       announcer.classList.add('show');
       
@@ -463,7 +493,6 @@
         announcer.classList.remove('show');
         announcer.classList.add('hide');
         
-        // Embestida
         const avatar = document.getElementById('enemy-avatar');
         avatar.style.transform = "scale(1.4) translateY(40px)";
         
@@ -476,29 +505,28 @@
           const pRect = document.getElementById('player-bar').getBoundingClientRect();
           spawnText(`-${eDmg}`, '#ef4444', pRect.left + (pRect.width/2), pRect.top - 20);
           
-          // Flash rojo en pantalla
-          const overlay = document.getElementById('battle-overlay');
-          overlay.style.background = "linear-gradient(to bottom, rgba(239, 68, 68, 0.4) 0%, rgba(220, 38, 38, 0.9) 100%)";
-          setTimeout(() => overlay.style.background = "linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.8) 100%)", 300);
+          document.body.classList.add('damage-flash');
+          setTimeout(() => document.body.classList.remove('damage-flash'), 500);
 
           avatar.style.transform = "scale(1) translateY(0)";
           updateBattleUI();
 
           if (playerHp <= 0) {
-            endGame('INFECCIÓN SISTÉMICA', 'La barrera epitelial fue destruida. El patógeno ingresó al torrente sanguíneo. Derrota celular.', '#ef4444');
+            endGame('INFECCIÓN SISTÉMICA', 'La integridad celular llegó a cero. Sepsis inminente. El patógeno ha vulnerado las defensas innatas.', '#ef4444');
           } else {
-            setTimeout(resetPlayerTurn, 1000);
+            setTimeout(resetPlayerTurn, 1200);
           }
         }, 300);
-      }, 1500);
+      }, 1600);
     }
 
     function resetPlayerTurn() {
       if (turnState === 'GAMEOVER') return;
       
       const announcer = document.getElementById('turn-announcer');
-      announcer.innerText = "TU TURNO";
-      announcer.style.background = "rgba(34, 197, 94, 0.9)";
+      announcer.innerText = "TU TURNO: RESPUESTA INNATA";
+      announcer.style.background = "rgba(34, 197, 94, 0.95)";
+      announcer.style.color = "#fff";
       announcer.classList.remove('hide');
       announcer.classList.add('show');
       
@@ -508,7 +536,7 @@
         atp = 3;
         turnState = 'PLAYER';
         updateBattleUI();
-      }, 1200);
+      }, 1400);
     }
 
     function endGame(title, desc, color) {
@@ -519,7 +547,7 @@
         document.getElementById('end-title').style.color = color;
         document.getElementById('end-desc').innerText = desc;
         modal.classList.add('active');
-      }, 800);
+      }, 1000);
     }
 
     function spawnText(txt, color, x, y) {
@@ -527,8 +555,7 @@
       el.className = 'fct';
       el.style.color = color;
       el.innerText = txt;
-      // Centrar respecto a coordenadas
-      el.style.left = `${x - 20}px`;
+      el.style.left = `${x - 40}px`;
       el.style.top = `${y - 20}px`;
       document.body.appendChild(el);
       setTimeout(() => el.remove(), 1200);
@@ -540,7 +567,6 @@
       element.classList.add('shake');
     }
 
-    // Iniciar
     window.onload = initApp;
   </script>
 </body>
