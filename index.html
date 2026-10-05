@@ -415,9 +415,10 @@
         videoContainer.innerHTML = '';
         
         // Inyecta el video solo si el escenario lo tiene y es una victoria
+        // Inyecta el video solo si el escenario lo tiene y es una victoria
         if (currentScen.video && currentScen.video !== '' && color === '#22c55e') {
           videoContainer.innerHTML = `
-            <video autoplay loop controls playsinline style="max-height: 250px; width: 100%; object-fit: cover; border-radius: 8px;">
+            <video autoplay loop controls playsinline style="height: 45vh; max-width: 100%; object-fit: contain; border-radius: 8px; background: #000;">
               <source src="${currentScen.video}" type="video/mp4">
               Tu navegador no soporta videos HTML5.
             </video>
