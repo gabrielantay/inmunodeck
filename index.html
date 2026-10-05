@@ -106,6 +106,22 @@
     .alert-box { display: inline-block; background: rgba(168, 85, 247, 0.9); border: 2px solid #d8b4fe; padding: 8px 16px; border-radius: 20px; font-weight: 900; font-size: 12px; text-transform: uppercase; box-shadow: 0 4px 10px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s; }
 
     /* ANIMACIONES */
+        /* ANIMACIONES */
+    .toxin-projectile {
+      position: absolute;
+      width: 18px; 
+      height: 18px;
+      background: var(--danger);
+      border-radius: 50%;
+      box-shadow: 0 0 15px var(--danger), inset 0 0 5px #fff;
+      z-index: 100;
+      pointer-events: none;
+      transition: transform 0.3s cubic-bezier(0.5, 0, 0.8, 1);
+    }
+
+    @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+    .turn-announcer { position: absolute; top: 40%; left: -100vw; width: 100vw; background: rgba(220, 38, 38, 0.95); padding: 25px 0; text-align: center; font-size: 32px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); z-index: 100; text-shadow: 2px 2px 0 #000; transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
     @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
     .turn-announcer { position: absolute; top: 40%; left: -100vw; width: 100vw; background: rgba(220, 38, 38, 0.95); padding: 25px 0; text-align: center; font-size: 32px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); z-index: 100; text-shadow: 2px 2px 0 #000; transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     .turn-announcer.show { transform: translateX(0); }
@@ -343,7 +359,7 @@
       if (enemyHp <= 0) endGame('VICTORIA INMUNOLÓGICA', 'El tejido ha sido asegurado.', '#22c55e');
     }
 
-    function startEnemyTurn() {
+        function startEnemyTurn() {
       if (turnState !== 'PLAYER' || enemyHp <= 0) return;
       turnState = 'ENEMY';
       updateBattleUI();
@@ -366,20 +382,39 @@
       setTimeout(() => {
         ann.classList.remove('show');
         const avatar = document.getElementById('enemy-avatar');
-        avatar.style.transform = "scale(1.4) translateY(40px)";
         
+        // Efecto de rotación e impulso del patógeno
+        avatar.style.transform = "scale(1.3) translateY(30px) rotate(-15deg)";
+        
+        // Lógica de daño y disparo de toxina
         setTimeout(() => {
           let eDmg = currentScen.atk;
           if (shielded) { eDmg = Math.floor(eDmg / 2); shielded = false; }
           
-          playerHp -= eDmg;
+          const eRect = avatar.getBoundingClientRect();
           const pRect = document.getElementById('player-bar').getBoundingClientRect();
+          
+          const proj = document.createElement('div');
+          proj.className = 'toxin-projectile';
+          proj.style.left = `${eRect.left + eRect.width/2}px`;
+          proj.style.top = `${eRect.top + eRect.height/2}px`;
+          document.body.appendChild(proj);
+          
+          void proj.offsetWidth;
+          
+          const distX = (pRect.left + pRect.width/2) - (eRect.left + eRect.width/2);
+          const distY = pRect.top - (eRect.top + eRect.height/2);
+          proj.style.transform = `translate(${distX}px, ${distY}px)`;
+          
+          setTimeout(() => proj.remove(), 300);
+
+          playerHp -= eDmg;
           spawnText(`-${eDmg}`, '#ef4444', pRect.left + pRect.width/2, pRect.top - 20);
           
           document.body.classList.add('damage-flash');
           setTimeout(() => document.body.classList.remove('damage-flash'), 500);
 
-          avatar.style.transform = "scale(1) translateY(0)";
+          avatar.style.transform = "scale(1) translateY(0) rotate(0deg)";
           updateBattleUI();
 
           if (playerHp <= 0) endGame('INFECCIÓN SISTÉMICA', 'Sepsis. El patógeno venció las defensas.', '#ef4444');
@@ -387,6 +422,7 @@
         }, 300);
       }, 1200);
     }
+
 
     function resetPlayerTurn() {
       if (turnState === 'GAMEOVER') return;
