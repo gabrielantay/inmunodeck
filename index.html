@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>InmunoDeck: Defensa Innata Avanzada</title>
+  <title>InmunoDeck: Defensa Innata y Puente Adaptativo</title>
   <style>
     :root {
       --bg-dark: #050b14;
@@ -17,209 +17,97 @@
     
     * { box-sizing: border-box; touch-action: manipulation; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
     
-    body {
-      background-color: #000;
-      color: white;
-      height: 100dvh; 
-      width: 100vw;
-      overflow: hidden;
-      user-select: none;
-    }
+    body { background-color: #000; color: white; height: 100dvh; width: 100vw; overflow: hidden; user-select: none; }
+    #app-container { position: relative; width: 100%; height: 100%; background: var(--bg-dark); }
 
-    #app-container {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      background: var(--bg-dark);
-    }
-
-    /* --- SISTEMA DE TRANSICIÓN --- */
-    .screen {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      display: flex;
-      flex-direction: column;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.8s ease-in-out;
-      background-size: cover;
-      background-position: center;
-    }
+    .screen { position: absolute; inset: 0; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 0.8s ease-in-out; background-size: cover; background-position: center; }
     .screen.active { opacity: 1; pointer-events: auto; }
 
-    /* --- PANTALLA 1: DRAFT --- */
+    /* PANTALLA 1: DRAFT */
     #draft-screen { background: linear-gradient(135deg, #091325 0%, #1e293b 100%); }
-    
-    .draft-header {
-      flex: 0 0 auto;
-      padding: 15px 20px;
-      text-align: center;
-      background: rgba(0, 0, 0, 0.6);
-      border-bottom: 3px solid var(--danger);
-      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
-    }
-    .draft-title { font-size: 26px; font-weight: 900; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-    
-    /* Panel de Inteligencia del Patógeno */
-    .pathogen-intel {
-      background: rgba(239, 68, 68, 0.15);
-      border: 1px solid var(--danger);
-      border-radius: 8px;
-      padding: 10px;
-      margin-top: 5px;
-    }
+    .draft-header { flex: 0 0 auto; padding: 15px 20px; text-align: center; background: rgba(0, 0, 0, 0.6); border-bottom: 3px solid var(--danger); }
+    .draft-title { font-size: 26px; font-weight: 900; color: var(--accent); text-transform: uppercase; margin-bottom: 5px; }
+    .pathogen-intel { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); border-radius: 8px; padding: 10px; margin-top: 5px; }
     .pathogen-name { font-size: 18px; font-weight: 900; color: var(--danger); text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .pathogen-vuln { font-size: 13px; color: #cbd5e1; margin-top: 5px; line-height: 1.4; font-weight: 500; }
     
     .draft-body { flex: 1 1 auto; overflow-y: auto; padding: 15px; }
-    .draft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
-    
-    .draft-footer {
-      flex: 0 0 auto;
-      padding: 15px 20px max(20px, env(safe-area-inset-bottom));
-      background: rgba(15, 23, 42, 0.95);
-      border-top: 2px solid var(--border);
-      box-shadow: 0 -10px 20px rgba(0,0,0,0.5);
-    }
+    .draft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; padding-bottom: 20px; }
+    .draft-footer { flex: 0 0 auto; padding: 15px 20px max(20px, env(safe-area-inset-bottom)); background: rgba(15, 23, 42, 0.95); border-top: 2px solid var(--border); }
 
-    /* Cartas Biológicas (Diseño Avanzado) */
-    .card-bio {
-      background: #1e293b;
-      border: 3px solid #334155;
-      border-radius: 10px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      cursor: pointer;
-      transition: transform 0.2s, border-color 0.2s;
-    }
+    .card-bio { background: #1e293b; border: 3px solid #334155; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; position: relative; cursor: pointer; transition: transform 0.2s, border-color 0.2s; }
     .card-bio.selected { border-color: var(--success); box-shadow: 0 0 15px rgba(34, 197, 94, 0.6); transform: translateY(-4px); }
     .card-bio.disabled { filter: grayscale(1) brightness(0.5); pointer-events: none; }
     .card-bio:active:not(.disabled) { transform: scale(0.95); }
     
-    .c-img {
-      height: 90px;
-      background-size: cover;
-      background-position: center;
-      border-bottom: 2px solid #334155;
-      position: relative;
-    }
-    .c-cost {
-      position: absolute; top: 4px; right: 4px;
-      background: var(--energy); color: #000;
-      width: 26px; height: 26px; border-radius: 50%;
-      display: flex; justify-content: center; align-items: center;
-      font-weight: 900; font-size: 15px; border: 2px solid #000;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.5);
-    }
-    .c-info { background: #0f172a; padding: 8px; flex: 1; display: flex; flex-direction: column; }
-    .c-name { font-size: 14px; font-weight: 900; text-transform: uppercase; color: #f8fafc; margin-bottom: 4px; text-align: center; }
-    .c-bio-desc { font-size: 10px; color: #94a3b8; line-height: 1.3; margin-bottom: 6px; font-style: italic; text-align: center; }
-    .c-mechanic { font-size: 11px; color: var(--accent); font-weight: 700; line-height: 1.2; text-align: center; background: rgba(56, 189, 248, 0.1); padding: 4px; border-radius: 4px; margin-top: auto; }
+    .c-img { height: 80px; background-size: cover; background-position: center; border-bottom: 2px solid #334155; position: relative; }
+    .c-cost { position: absolute; top: 4px; right: 4px; background: var(--energy); color: #000; width: 26px; height: 26px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: 900; font-size: 15px; border: 2px solid #000; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+    .c-info { background: #0f172a; padding: 6px; flex: 1; display: flex; flex-direction: column; }
+    .c-name { font-size: 13px; font-weight: 900; text-transform: uppercase; color: #f8fafc; margin-bottom: 2px; text-align: center; }
+    .c-bio-desc { font-size: 9px; color: #94a3b8; line-height: 1.2; margin-bottom: 4px; font-style: italic; text-align: center; }
+    .c-mechanic { font-size: 10px; color: var(--accent); font-weight: 700; line-height: 1.1; text-align: center; background: rgba(56, 189, 248, 0.1); padding: 4px; border-radius: 4px; margin-top: auto; }
 
-    .btn-main {
-      width: 100%; background: var(--success); color: white; border: none; padding: 18px;
-      border-radius: 12px; font-weight: 900; font-size: 20px; text-transform: uppercase;
-      transition: background 0.2s; box-shadow: 0 6px 0 #166534;
-    }
+    .btn-main { width: 100%; background: var(--success); color: white; border: none; padding: 16px; border-radius: 12px; font-weight: 900; font-size: 18px; text-transform: uppercase; box-shadow: 0 6px 0 #166534; }
     .btn-main:active { transform: translateY(4px); box-shadow: none; }
     .btn-main:disabled { background: #475569; opacity: 0.5; box-shadow: 0 6px 0 #1e293b; }
 
-    /* --- PANTALLA 2: COMBATE --- */
-    #battle-overlay {
-      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.85) 100%);
-      z-index: 1;
-    }
+    /* PANTALLA 2: COMBATE */
+    #battle-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.85) 100%); z-index: 1; }
     .battle-ui { position: relative; z-index: 2; display: flex; flex-direction: column; height: 100%; }
     
     .hud-top { flex: 0 0 auto; padding: 15px max(15px, env(safe-area-inset-left)); }
-    .env-title-battle { font-size: 30px; font-weight: 900; text-align: center; color: var(--accent); text-shadow: 2px 2px 4px #000; text-transform: uppercase; margin-bottom: 12px; }
+    .env-title-battle { font-size: 28px; font-weight: 900; text-align: center; color: var(--accent); text-shadow: 2px 2px 4px #000; text-transform: uppercase; margin-bottom: 10px; }
     
-    .bars-container { display: flex; justify-content: space-between; gap: 15px; }
-    .bar-wrapper { flex: 1; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 10px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.5); }
-    .bar-label { font-size: 13px; font-weight: 900; text-transform: uppercase; margin-bottom: 5px; }
-    .bar-bg { background: #1e293b; height: 26px; border-radius: 13px; overflow: hidden; position: relative; border: 2px solid #000; }
+    .bars-container { display: flex; justify-content: space-between; gap: 10px; }
+    .bar-wrapper { flex: 1; background: rgba(0,0,0,0.8); padding: 8px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.5); }
+    .bar-label { font-size: 12px; font-weight: 900; text-transform: uppercase; margin-bottom: 4px; }
+    .bar-bg { background: #1e293b; height: 24px; border-radius: 12px; overflow: hidden; position: relative; border: 2px solid #000; }
     .bar-fill { height: 100%; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
     #player-bar { background: linear-gradient(90deg, #16a34a, #22c55e); }
     #enemy-bar { background: linear-gradient(90deg, #dc2626, #ef4444); }
-    .bar-text { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; font-size: 15px; font-weight: 900; text-shadow: 1px 1px 2px #000; }
+    .bar-text { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; font-size: 14px; font-weight: 900; text-shadow: 1px 1px 2px #000; }
 
-    /* Arena Central */
     .arena { flex: 1 1 auto; display: flex; justify-content: center; align-items: center; position: relative; }
-    .enemy-avatar {
-      width: 220px; height: 220px;
-      border-radius: 50%;
-      background-size: cover; background-position: center;
-      border: 4px solid var(--danger);
-      box-shadow: 0 0 50px rgba(239, 68, 68, 0.6);
-      animation: breathe 3.5s ease-in-out infinite;
-      position: relative;
-    }
+    .enemy-avatar { width: 200px; height: 200px; border-radius: 50%; background-size: cover; background-position: center; border: 4px solid var(--danger); box-shadow: 0 0 50px rgba(239, 68, 68, 0.6); animation: breathe 3.5s ease-in-out infinite; position: relative; }
+    .status-icon { position: absolute; top: -15px; right: -15px; background: #000; border: 2px solid #fff; border-radius: 50%; width: 40px; height: 40px; display: none; justify-content: center; align-items: center; font-size: 20px; box-shadow: 0 0 10px #fff; }
     
-    /* HUD Inferior */
-    .hud-bottom {
-      flex: 0 0 auto;
-      background: rgba(0,0,0,0.85);
-      padding: 12px 15px max(12px, env(safe-area-inset-bottom));
-      border-top: 2px solid var(--border);
-    }
-    .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .energy-display { font-size: 24px; font-weight: 900; color: var(--energy); display: flex; align-items: center; gap: 8px; text-shadow: 1px 1px 2px #000; }
-    .energy-icon { font-size: 28px; filter: drop-shadow(0 0 5px var(--energy)); }
-    .btn-turn { background: #3b82f6; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 900; font-size: 16px; text-transform: uppercase; box-shadow: 0 4px 0 #1d4ed8; }
+    .hud-bottom { flex: 0 0 auto; background: rgba(0,0,0,0.85); padding: 10px 15px max(10px, env(safe-area-inset-bottom)); border-top: 2px solid var(--border); }
+    .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .energy-display { font-size: 22px; font-weight: 900; color: var(--energy); display: flex; align-items: center; gap: 8px; text-shadow: 1px 1px 2px #000; }
+    .btn-turn { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 900; font-size: 15px; text-transform: uppercase; box-shadow: 0 4px 0 #1d4ed8; }
     .btn-turn:active { transform: translateY(4px); box-shadow: none; }
     
-    .hand-container { display: flex; gap: 10px; justify-content: center; height: 185px; }
+    .hand-container { display: flex; gap: 8px; justify-content: flex-start; overflow-x: auto; padding-bottom: 5px; }
+    .hand-container .card-bio { width: 110px; flex-shrink: 0; }
+    .hand-container .c-img { height: 65px; }
+    .hand-container .c-bio-desc { display: none; }
+    .hand-container .c-mechanic { font-size: 9px; padding: 2px; }
 
-    /* Variante de cartas para la mano en batalla (más compacta pero descriptiva) */
-    .hand-container .card-bio { width: 120px; flex-shrink: 0; }
-    .hand-container .c-img { height: 75px; }
-    .hand-container .c-bio-desc { display: none; } /* Ocultamos la bio extensa en batalla para ganar espacio */
+    /* ALERTAS DE SISTEMA (CELULA DENDRITICA) */
+    .system-alert { position: absolute; top: 120px; left: 0; right: 0; text-align: center; z-index: 50; pointer-events: none; }
+    .alert-box { display: inline-block; background: rgba(168, 85, 247, 0.9); border: 2px solid #d8b4fe; padding: 8px 16px; border-radius: 20px; font-weight: 900; font-size: 12px; text-transform: uppercase; box-shadow: 0 4px 10px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s; }
 
-    /* --- ANIMACIONES Y ESTADOS --- */
+    /* ANIMACIONES */
     @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
-    
-    .turn-announcer {
-      position: absolute; top: 40%; left: -100vw; width: 100vw;
-      background: rgba(220, 38, 38, 0.95); padding: 25px 0;
-      text-align: center; font-size: 38px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.9);
-      z-index: 100; text-shadow: 2px 2px 0 #000;
-      transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
+    .turn-announcer { position: absolute; top: 40%; left: -100vw; width: 100vw; background: rgba(220, 38, 38, 0.95); padding: 25px 0; text-align: center; font-size: 32px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); z-index: 100; text-shadow: 2px 2px 0 #000; transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     .turn-announcer.show { transform: translateX(0); }
     .turn-announcer.hide { transform: translateX(100vw); }
-
-    .fct {
-      position: absolute; z-index: 50; font-size: 50px; font-weight: 900; text-shadow: 3px 3px 0 #000, -2px -2px 0 #000;
-      pointer-events: none; animation: floatUp 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-    }
+    .fct { position: absolute; z-index: 50; font-size: 45px; font-weight: 900; text-shadow: 3px 3px 0 #000, -2px -2px 0 #000; pointer-events: none; animation: floatUp 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
     @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(0.5); } 20% { transform: translateY(-50px) scale(1.3); } 100% { opacity: 0; transform: translateY(-120px) scale(1); } }
-
     .shake { animation: shakeAnim 0.4s cubic-bezier(.36,.07,.19,.97) both; }
     @keyframes shakeAnim { 10%, 90% { transform: translate3d(-6px, 0, 0); } 20%, 80% { transform: translate3d(12px, 0, 0); filter: brightness(2) saturate(3); } 30%, 50%, 70% { transform: translate3d(-15px, 0, 0); } 40%, 60% { transform: translate3d(15px, 0, 0); } }
-
     .damage-flash { animation: screenFlash 0.5s ease-out forwards; }
     @keyframes screenFlash { 0% { box-shadow: inset 0 0 0 0 transparent; } 50% { box-shadow: inset 0 0 150px 60px rgba(239,68,68,0.9); } 100% { box-shadow: inset 0 0 0 0 transparent; } }
-
-    /* Modal Fin de Juego */
-    .modal-overlay {
-      position: absolute; inset: 0; background: rgba(0,0,0,0.92); z-index: 200;
-      display: flex; flex-direction: column; justify-content: center; align-items: center;
-      opacity: 0; pointer-events: none; transition: opacity 0.5s ease; padding: 20px;
-    }
+    .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.92); z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; padding: 20px; }
     .modal-overlay.active { opacity: 1; pointer-events: auto; }
-    .modal-title { font-size: 45px; font-weight: 900; text-transform: uppercase; margin-bottom: 20px; text-shadow: 0 0 25px currentColor; text-align: center; line-height: 1.1; }
-    .modal-desc { font-size: 20px; color: #e2e8f0; text-align: center; max-width: 90%; line-height: 1.5; margin-bottom: 40px; }
+    .modal-title { font-size: 38px; font-weight: 900; text-transform: uppercase; margin-bottom: 15px; text-shadow: 0 0 25px currentColor; text-align: center; line-height: 1.1; }
+    .modal-desc { font-size: 16px; color: #e2e8f0; text-align: center; max-width: 90%; line-height: 1.5; margin-bottom: 30px; }
   </style>
 </head>
 <body>
 
   <div id="app-container">
-    
-    <!-- PANTALLA 1: DRAFT -->
+    <!-- DRAFT -->
     <div id="draft-screen" class="screen active">
       <div class="draft-header">
         <div class="draft-title" id="draft-tissue-name">ANALIZANDO TEJIDO...</div>
@@ -229,7 +117,7 @@
         </div>
       </div>
       <div class="draft-body">
-        <div style="font-size: 14px; color: #94a3b8; margin-bottom: 10px; font-weight: bold; text-align: center;">Ensambla tu respuesta inmune táctica (<span id="draft-count">0</span>/4 cartas)</div>
+        <div style="font-size: 13px; color: #94a3b8; margin-bottom: 10px; font-weight: bold; text-align: center;">Ensambla tu respuesta inmune (<span id="draft-count">0</span>/5 cartas)</div>
         <div class="draft-grid" id="draft-grid"></div>
       </div>
       <div class="draft-footer">
@@ -237,38 +125,35 @@
       </div>
     </div>
 
-    <!-- PANTALLA 2: COMBATE -->
+    <!-- COMBATE -->
     <div id="battle-screen" class="screen">
       <div id="battle-overlay"></div>
       <div class="battle-ui">
         
         <div class="hud-top">
           <div class="env-title-battle" id="env-title">Epidermis</div>
+          <div class="system-alert"><div class="alert-box" id="sys-alert">Célula Dendrítica Migrando...</div></div>
           <div class="bars-container">
             <div class="bar-wrapper">
-              <div class="bar-label" style="color: var(--success);">Integridad Tisular (Hospedero)</div>
-              <div class="bar-bg">
-                <div id="player-bar" class="bar-fill"></div>
-                <div id="player-hp-txt" class="bar-text">100/100</div>
-              </div>
+              <div class="bar-label" style="color: var(--success);">Hospedero</div>
+              <div class="bar-bg"><div id="player-bar" class="bar-fill"></div><div id="player-hp-txt" class="bar-text">100/100</div></div>
             </div>
             <div class="bar-wrapper">
               <div class="bar-label" id="enemy-name" style="color: var(--danger); text-align: right;">Patógeno</div>
-              <div class="bar-bg" style="display: flex; justify-content: flex-end;">
-                <div id="enemy-bar" class="bar-fill"></div>
-                <div id="enemy-hp-txt" class="bar-text">100/100</div>
-              </div>
+              <div class="bar-bg" style="display: flex; justify-content: flex-end;"><div id="enemy-bar" class="bar-fill"></div><div id="enemy-hp-txt" class="bar-text">100/100</div></div>
             </div>
           </div>
         </div>
 
         <div class="arena" id="arena">
-          <div id="enemy-avatar" class="enemy-avatar"></div>
+          <div id="enemy-avatar" class="enemy-avatar">
+            <div id="status-stun" class="status-icon">😵</div>
+          </div>
         </div>
 
         <div class="hud-bottom">
           <div class="controls">
-            <div class="energy-display"><span class="energy-icon">⚡</span> ATP: <span id="energy-val">3</span></div>
+            <div class="energy-display">⚡ ATP: <span id="energy-val">4</span></div>
             <button id="btn-end-turn" class="btn-turn" onclick="startEnemyTurn()">Pasar Turno</button>
           </div>
           <div class="hand-container" id="battle-hand"></div>
@@ -276,94 +161,77 @@
       </div>
     </div>
 
-    <!-- ANIMADOR DE TURNOS -->
     <div id="turn-announcer" class="turn-announcer">TURNO DEL PATÓGENO</div>
 
-    <!-- PANTALLAS FINALIZACIÓN -->
     <div id="end-modal" class="modal-overlay">
       <div id="end-title" class="modal-title"></div>
       <div id="end-desc" class="modal-desc"></div>
-      <button class="btn-turn" style="padding: 18px 35px; font-size: 22px; box-shadow: 0 6px 0 #1d4ed8;" onclick="location.reload()">ATENDER NUEVA INFECCIÓN</button>
+      <button class="btn-turn" style="padding: 15px 30px; font-size: 18px; box-shadow: 0 6px 0 #1d4ed8;" onclick="location.reload()">NUEVA INFECCIÓN</button>
     </div>
-
   </div>
 
   <script>
-    /* 
-      ENLACES DE WIKIMEDIA COMMONS (Estables, científicos y libres)
-      Reemplazan los iconos genéricos por microfotografías reales o diagramas médicos.
-    */
+    /* VARIABLES LOCALES (MANTENIDAS DE TUS SUBIDAS) */
     const IMG = {
       neutrofilo: 'neutrofilo.png',
       macrofago: 'macrofago.png',
       nk: 'nk.jpg',
-      eosinofilo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Blausen_0352_Eosinophil_%28crop%29.png/400px-Blausen_0352_Eosinophil_%28crop%29.png',
-      complemento: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Complement_system.png/400px-Complement_system.png',
-      interferon: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Interferon_signaling.png/400px-Interferon_signaling.png',
-      
       bgPiel: 'piel.jpg',
       bgMucosa: 'epiteliomucoso.jpg',
       bgGalt: 'mucosa.jpg',
-      
       pathoBact: 'bacteria.png',
       pathoVirus: 'virus.gif',
-      pathoHelm: 'helminto.jpg'
+      pathoHelm: 'helminto.jpg',
+      
+      /* NUEVAS CARTAS (Enlaces genéricos temporales. Sube tus propias imágenes luego y cámbialas) */
+      eosinofilo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Blausen_0352_Eosinophil_%28crop%29.png/400px-Blausen_0352_Eosinophil_%28crop%29.png',
+      complemento: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Complement_system.png/400px-Complement_system.png',
+      interferon: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Interferon_signaling.png/400px-Interferon_signaling.png',
+      dendritica: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Dendritic_cell.jpg/400px-Dendritic_cell.jpg',
+      mastocito: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Mast_cells_in_mastocytosis_-_very_high_mag.jpg/400px-Mast_cells_in_mastocytosis_-_very_high_mag.jpg'
     };
 
     const SCENARIOS = [
-      { id: 'piel', name: 'Epidermis Subcutánea', enemy: 'Staphylococcus aureus', type: 'bacteria', hp: 130, atk: 20, bg: IMG.bgPiel, avatar: IMG.pathoBact, 
-        vuln: 'Vulnerabilidad táctica: Altamente susceptible a fagocitosis directa y lisis por Complejo de Ataque a Membrana (Complemento).' },
-      { id: 'mucosa', name: 'Epitelio Respiratorio', enemy: 'Orthomyxovirus (Influenza)', type: 'virus', hp: 100, atk: 28, bg: IMG.bgMucosa, avatar: IMG.pathoVirus,
-        vuln: 'Vulnerabilidad táctica: Patógeno intracelular. Evade fagocitosis celular. Requiere Células NK (apoptosis) e Interferón (bloqueo viral).' },
-      { id: 'galt', name: 'Mucosa Intestinal (GALT)', enemy: 'Ascaris lumbricoides', type: 'helminto', hp: 180, atk: 18, bg: IMG.bgGalt, avatar: IMG.pathoHelm,
-        vuln: 'Vulnerabilidad táctica: Macroparásito. Su gran tamaño bloquea fagocitosis. Extremadamente vulnerable a la desgranulación extracelular de Eosinófilos.' }
+      { id: 'piel', name: 'Epidermis', enemy: 'Bacteria Extracelular', type: 'bacteria', hp: 160, atk: 25, bg: IMG.bgPiel, avatar: IMG.pathoBact, 
+        vuln: 'Vulnerable a: Fagocitosis M1 y Complemento. Amenaza tisular alta.' },
+      { id: 'mucosa', name: 'Epitelio Respiratorio', enemy: 'Virus Intracelular', type: 'virus', hp: 120, atk: 35, bg: IMG.bgMucosa, avatar: IMG.pathoVirus,
+        vuln: 'Vulnerable a: Células NK e Interferón. Inmune a Neutrófilos y Complemento.' },
+      { id: 'galt', name: 'GALT Intestinal', enemy: 'Macroparásito Helminto', type: 'helminto', hp: 200, atk: 20, bg: IMG.bgGalt, avatar: IMG.pathoHelm,
+        vuln: 'Vulnerable a: Eosinófilos y Mastocitos. La fagocitosis es ineficaz por su tamaño.' }
     ];
 
     const CARDS = [
-      { id: 'neutro', name: 'Neutrófilo', cost: 1, type: 'atk', val: 30, img: IMG.neutrofilo, 
-        bio: 'Leucocito polimorfonuclear. Primera línea de defensa celular.', mechanic: 'Daño: 30. Ineficaz contra helmintos.' },
-      { id: 'macro', name: 'Macrófago', cost: 2, type: 'atk_heal', val: 20, heal: 15, img: IMG.macrofago, 
-        bio: 'Fagocito profesional residente. Elimina detritos y secreta citocinas.', mechanic: 'Daño: 20 | Curación: +15 HP tisular.' },
-      { id: 'nk', name: 'Célula NK', cost: 2, type: 'atk', val: 40, img: IMG.nk, 
-        bio: 'Linfocito innato que detecta ausencia de MHC-I.', mechanic: 'Daño: 40. Crítico (x2) contra virus.' },
-      { id: 'eosino', name: 'Eosinófilo', cost: 2, type: 'atk', val: 25, img: IMG.eosinofilo, 
-        bio: 'Granulocito especializado con Proteína Básica Mayor.', mechanic: 'Daño: 25. Letal (x3) contra helmintos.' },
-      { id: 'comp', name: 'Complemento', cost: 1, type: 'buff', img: IMG.complemento, 
-        bio: 'Cascada proteica plasmática. Facilita la opsonización.', mechanic: 'Marca al patógeno: +50% al siguiente daño.' },
-      { id: 'ifn', name: 'Interferón α/β', cost: 1, type: 'shield', img: IMG.interferon, 
-        bio: 'Citocina que induce estado de resistencia antiviral en células.', mechanic: 'Reduce el ataque enemigo a la mitad 1 turno.' }
+      { id: 'neutro', name: 'Neutrófilo', cost: 1, type: 'atk', val: 30, img: IMG.neutrofilo, bio: 'Fagocito rápido.', mechanic: 'Daño: 30. (Ineficaz vs Helmintos y Virus)' },
+      { id: 'macroM1', name: 'Macrófago M1', cost: 2, type: 'atk', val: 50, img: IMG.macrofago, bio: 'Estallido respiratorio lítico.', mechanic: 'Daño masivo: 50. (Bajo vs Virus)' },
+      { id: 'macroM2', name: 'Macrófago M2', cost: 2, type: 'heal', val: 40, img: IMG.macrofago, bio: 'Regenerador tisular y angiogénesis.', mechanic: 'Repara +40 HP a la barrera del hospedero.' },
+      { id: 'nk', name: 'Célula NK', cost: 2, type: 'atk', val: 40, img: IMG.nk, bio: 'Induce apoptosis en células infectadas.', mechanic: 'Daño: 40. Crítico (x2) contra Virus.' },
+      { id: 'eosino', name: 'Eosinófilo', cost: 2, type: 'atk', val: 25, img: IMG.eosinofilo, bio: 'Secreta Proteína Básica Mayor.', mechanic: 'Daño: 25. Letal (x3) contra Helmintos.' },
+      { id: 'masto', name: 'Mastocito', cost: 1, type: 'stun', img: IMG.mastocito, bio: 'Secreción masiva de histamina.', mechanic: 'Aturde al patógeno. Salta su próximo ataque.' },
+      { id: 'comp', name: 'Complemento', cost: 1, type: 'buff', img: IMG.complemento, bio: 'Lisis y opsonización.', mechanic: 'Marca al patógeno: +50% de daño al próximo ataque.' },
+      { id: 'ifn', name: 'Interferón α/β', cost: 1, type: 'shield', img: IMG.interferon, bio: 'Crea resistencia celular.', mechanic: 'Reduce el ataque enemigo a la mitad en su turno.' },
+      { id: 'dendro', name: 'C. Dendrítica', cost: 3, type: 'ultimate', img: IMG.dendritica, bio: 'Puente a la inmunidad adaptativa.', mechanic: 'Migra al ganglio. En 2 turnos, ataque Linfocitario Letal (-120 HP).' }
     ];
 
     let currentScen = null;
     let deck = [];
     let playerHp = 100, enemyHp = 100, maxEnemyHp = 100;
-    let atp = 3;
+    let atp = 4, maxAtp = 4;
     let turnState = 'PLAYER';
-    let opsonized = false, shielded = false;
+    let opsonized = false, shielded = false, stunned = false;
+    let adaptiveTimer = -1; // -1 inactivo, 2 y 1 migrando, 0 ataca
 
-    /* --- INICIALIZACIÓN --- */
+    /* --- INICIO --- */
     function initApp() {
       currentScen = SCENARIOS[Math.floor(Math.random() * SCENARIOS.length)];
-      
-      // Llenar Briefing
       document.getElementById('draft-tissue-name').innerText = currentScen.name;
       document.getElementById('draft-pathogen-name').innerText = `${currentScen.enemy} (${currentScen.type.toUpperCase()})`;
       document.getElementById('draft-vulnerability').innerText = currentScen.vuln;
       
-      // Renderizar Cuadrícula de Selección
       const grid = document.getElementById('draft-grid');
       CARDS.forEach(c => {
         const el = document.createElement('div');
         el.className = 'card-bio';
-        el.innerHTML = `
-          <div class="c-img" style="background-image: url('${c.img}')"></div>
-          <div class="c-cost">${c.cost}</div>
-          <div class="c-info">
-            <div class="c-name">${c.name}</div>
-            <div class="c-bio-desc">${c.bio}</div>
-            <div class="c-mechanic">${c.mechanic}</div>
-          </div>
-        `;
+        el.innerHTML = `<div class="c-img" style="background-image: url('${c.img}')"></div><div class="c-cost">${c.cost}</div><div class="c-info"><div class="c-name">${c.name}</div><div class="c-bio-desc">${c.bio}</div><div class="c-mechanic">${c.mechanic}</div></div>`;
         el.onclick = () => toggleSelection(c, el);
         grid.appendChild(el);
       });
@@ -371,17 +239,10 @@
 
     function toggleSelection(cardObj, element) {
       const idx = deck.indexOf(cardObj);
-      if (idx > -1) {
-        deck.splice(idx, 1);
-        element.classList.remove('selected');
-      } else {
-        if (deck.length < 4) {
-          deck.push(cardObj);
-          element.classList.add('selected');
-        }
-      }
+      if (idx > -1) { deck.splice(idx, 1); element.classList.remove('selected'); }
+      else if (deck.length < 5) { deck.push(cardObj); element.classList.add('selected'); }
       document.getElementById('draft-count').innerText = deck.length;
-      document.getElementById('btn-start').disabled = deck.length !== 4;
+      document.getElementById('btn-start').disabled = deck.length !== 5;
     }
 
     function transitionToBattle() {
@@ -389,92 +250,73 @@
       const battleScreen = document.getElementById('battle-screen');
       battleScreen.style.backgroundImage = `url('${currentScen.bg}')`;
       battleScreen.classList.add('active');
-      
       document.getElementById('env-title').innerText = currentScen.name;
       document.getElementById('enemy-name').innerText = currentScen.enemy;
       document.getElementById('enemy-avatar').style.backgroundImage = `url('${currentScen.avatar}')`;
-      
       enemyHp = maxEnemyHp = currentScen.hp;
       updateBattleUI();
     }
 
-    /* --- LÓGICA DE COMBATE --- */
+    /* --- COMBATE --- */
     function updateBattleUI() {
       document.getElementById('player-bar').style.width = `${Math.max(0, playerHp)}%`;
       document.getElementById('player-hp-txt').innerText = `${Math.max(0, playerHp)} / 100`;
-      
-      const ePct = Math.max(0, (enemyHp / maxEnemyHp) * 100);
-      document.getElementById('enemy-bar').style.width = `${ePct}%`;
+      document.getElementById('enemy-bar').style.width = `${Math.max(0, (enemyHp / maxEnemyHp) * 100)}%`;
       document.getElementById('enemy-hp-txt').innerText = `${Math.max(0, enemyHp)} / ${maxEnemyHp}`;
-      
       document.getElementById('energy-val').innerText = atp;
+      document.getElementById('status-stun').style.display = stunned ? 'flex' : 'none';
+      
+      const alertBox = document.getElementById('sys-alert');
+      if (adaptiveTimer === 2) { alertBox.innerText = "Dendrítica migrando: Faltan 2 turnos"; alertBox.style.opacity = 1; }
+      else if (adaptiveTimer === 1) { alertBox.innerText = "Expansión Clonal (Linfocitos): Falta 1 turno"; alertBox.style.opacity = 1; }
+      else if (adaptiveTimer === -1) { alertBox.style.opacity = 0; }
       
       const hand = document.getElementById('battle-hand');
       hand.innerHTML = '';
       deck.forEach(c => {
+        const isDisabled = turnState !== 'PLAYER' || atp < c.cost || (c.id === 'dendro' && adaptiveTimer > -1);
         const el = document.createElement('div');
-        const isDisabled = turnState !== 'PLAYER' || atp < c.cost;
         el.className = `card-bio ${isDisabled ? 'disabled' : ''}`;
-        el.innerHTML = `
-          <div class="c-img" style="background-image: url('${c.img}')"></div>
-          <div class="c-cost">${c.cost}</div>
-          <div class="c-info">
-            <div class="c-name">${c.name}</div>
-            <div class="c-mechanic">${c.mechanic}</div>
-          </div>
-        `;
-        el.onclick = (e) => executePlayerAction(c, el, e);
+        el.innerHTML = `<div class="c-img" style="background-image: url('${c.img}')"></div><div class="c-cost">${c.cost}</div><div class="c-info"><div class="c-name">${c.name}</div><div class="c-mechanic">${c.mechanic}</div></div>`;
+        el.onclick = () => executePlayerAction(c);
         hand.appendChild(el);
       });
     }
 
-    function executePlayerAction(card, cardElement, event) {
-      if (turnState !== 'PLAYER' || atp < card.cost) return;
-      
+    function executePlayerAction(card) {
+      if (turnState !== 'PLAYER' || atp < card.cost || (card.id === 'dendro' && adaptiveTimer > -1)) return;
       atp -= card.cost;
-      updateBattleUI();
+      
+      const eAvatar = document.getElementById('enemy-avatar');
+      const rect = eAvatar.getBoundingClientRect();
+      const cX = rect.left + rect.width / 2, cY = rect.top + rect.height / 2;
 
-      const enemyAvatar = document.getElementById('enemy-avatar');
-      const eRect = enemyAvatar.getBoundingClientRect();
-      const cX = eRect.left + (eRect.width / 2);
-      const cY = eRect.top + (eRect.height / 2);
-
-      // Resolución Biológica
-      if (card.type.includes('atk')) {
+      if (card.type === 'atk') {
         let dmg = card.val;
-        
-        // Multiplicadores y Resistencias Biológicas
         if (card.id === 'eosino' && currentScen.type === 'helminto') dmg *= 3;
         else if (card.id === 'nk' && currentScen.type === 'virus') dmg *= 2;
-        else if (card.id === 'neutro' && currentScen.type === 'helminto') dmg = 5;
-
+        else if ((card.id === 'neutro' || card.id === 'macroM1') && (currentScen.type === 'helminto' || currentScen.type === 'virus')) dmg = 5;
         if (opsonized) { dmg = Math.floor(dmg * 1.5); opsonized = false; }
         
         enemyHp -= dmg;
         spawnText(`-${dmg}`, '#ef4444', cX, cY);
-        triggerShake(enemyAvatar);
-
-        if (card.heal) {
-          playerHp = Math.min(100, playerHp + card.heal);
-          spawnText(`+${card.heal}`, '#22c55e', cX, cY + 50);
-        }
+        triggerShake(eAvatar);
       } 
-      else if (card.type === 'buff') {
-        opsonized = true;
-        spawnText("C3b: OPSONIZADO", '#a855f7', cX, cY);
-      } 
-      else if (card.type === 'shield') {
-        shielded = true;
-        spawnText("ESTADO ANTIVIRAL", '#38bdf8', cX, cY);
+      else if (card.type === 'heal') {
+        playerHp = Math.min(100, playerHp + card.val);
+        spawnText(`+${card.val}`, '#22c55e', cX, cY + 40);
       }
+      else if (card.type === 'stun') { stunned = true; spawnText("ATURDIDO", '#eab308', cX, cY); }
+      else if (card.type === 'buff') { opsonized = true; spawnText("OPSONIZADO", '#a855f7', cX, cY); }
+      else if (card.type === 'shield') { shielded = true; spawnText("ESCUDO IFN", '#38bdf8', cX, cY); }
+      else if (card.type === 'ultimate') { adaptiveTimer = 2; spawnText("APC MIGRANDO", '#d8b4fe', cX, cY); }
 
       updateBattleUI();
+      checkVictory();
+    }
 
-      if (enemyHp <= 0) {
-        endGame('VICTORIA INMUNOLÓGICA', 'Infección erradicada. La barrera innata protegió el tejido exitosamente sin requerir respuesta adaptativa.', '#22c55e');
-      } else if (atp === 0) {
-        setTimeout(startEnemyTurn, 1000);
-      }
+    function checkVictory() {
+      if (enemyHp <= 0) endGame('VICTORIA INMUNOLÓGICA', 'El tejido ha sido asegurado.', '#22c55e');
     }
 
     function startEnemyTurn() {
@@ -482,17 +324,23 @@
       turnState = 'ENEMY';
       updateBattleUI();
 
-      const announcer = document.getElementById('turn-announcer');
-      announcer.innerText = `TURNO DE ${currentScen.enemy.toUpperCase()}`;
-      announcer.style.background = "rgba(220, 38, 38, 0.95)";
-      announcer.style.color = "#fff";
-      announcer.classList.remove('hide');
-      announcer.classList.add('show');
+      if (stunned) {
+        stunned = false;
+        const ann = document.getElementById('turn-announcer');
+        ann.innerText = "PATÓGENO ATURDIDO";
+        ann.style.background = "#ca8a04";
+        ann.classList.add('show');
+        setTimeout(() => { ann.classList.remove('show'); resetPlayerTurn(); }, 1500);
+        return;
+      }
+
+      const ann = document.getElementById('turn-announcer');
+      ann.innerText = `TURNO DEL PATÓGENO`;
+      ann.style.background = "rgba(220, 38, 38, 0.95)";
+      ann.classList.add('show');
       
       setTimeout(() => {
-        announcer.classList.remove('show');
-        announcer.classList.add('hide');
-        
+        ann.classList.remove('show');
         const avatar = document.getElementById('enemy-avatar');
         avatar.style.transform = "scale(1.4) translateY(40px)";
         
@@ -501,9 +349,8 @@
           if (shielded) { eDmg = Math.floor(eDmg / 2); shielded = false; }
           
           playerHp -= eDmg;
-          
           const pRect = document.getElementById('player-bar').getBoundingClientRect();
-          spawnText(`-${eDmg}`, '#ef4444', pRect.left + (pRect.width/2), pRect.top - 20);
+          spawnText(`-${eDmg}`, '#ef4444', pRect.left + pRect.width/2, pRect.top - 20);
           
           document.body.classList.add('damage-flash');
           setTimeout(() => document.body.classList.remove('damage-flash'), 500);
@@ -511,32 +358,44 @@
           avatar.style.transform = "scale(1) translateY(0)";
           updateBattleUI();
 
-          if (playerHp <= 0) {
-            endGame('INFECCIÓN SISTÉMICA', 'La integridad celular llegó a cero. Sepsis inminente. El patógeno ha vulnerado las defensas innatas.', '#ef4444');
-          } else {
-            setTimeout(resetPlayerTurn, 1200);
-          }
+          if (playerHp <= 0) endGame('INFECCIÓN SISTÉMICA', 'Sepsis. El patógeno venció las defensas.', '#ef4444');
+          else setTimeout(resetPlayerTurn, 1000);
         }, 300);
-      }, 1600);
+      }, 1200);
     }
 
     function resetPlayerTurn() {
       if (turnState === 'GAMEOVER') return;
       
-      const announcer = document.getElementById('turn-announcer');
-      announcer.innerText = "TU TURNO: RESPUESTA INNATA";
-      announcer.style.background = "rgba(34, 197, 94, 0.95)";
-      announcer.style.color = "#fff";
-      announcer.classList.remove('hide');
-      announcer.classList.add('show');
+      if (adaptiveTimer > 0) adaptiveTimer--;
       
-      setTimeout(() => {
-        announcer.classList.remove('show');
-        announcer.classList.add('hide');
-        atp = 3;
-        turnState = 'PLAYER';
-        updateBattleUI();
-      }, 1400);
+      if (adaptiveTimer === 0) {
+        adaptiveTimer = -1;
+        const eAvatar = document.getElementById('enemy-avatar');
+        const r = eAvatar.getBoundingClientRect();
+        const ann = document.getElementById('turn-announcer');
+        ann.innerText = "ATAQUE LINFOCITARIO";
+        ann.style.background = "rgba(168, 85, 247, 0.95)";
+        ann.classList.add('show');
+        
+        setTimeout(() => {
+          ann.classList.remove('show');
+          enemyHp -= 120;
+          spawnText("-120", '#d8b4fe', r.left + r.width/2, r.top + r.height/2);
+          triggerShake(eAvatar);
+          updateBattleUI();
+          checkVictory();
+          if (enemyHp > 0) resetNormalTurn();
+        }, 1500);
+      } else {
+        resetNormalTurn();
+      }
+    }
+
+    function resetNormalTurn() {
+      atp = maxAtp;
+      turnState = 'PLAYER';
+      updateBattleUI();
     }
 
     function endGame(title, desc, color) {
@@ -547,25 +406,18 @@
         document.getElementById('end-title').style.color = color;
         document.getElementById('end-desc').innerText = desc;
         modal.classList.add('active');
-      }, 1000);
+      }, 800);
     }
 
     function spawnText(txt, color, x, y) {
       const el = document.createElement('div');
-      el.className = 'fct';
-      el.style.color = color;
-      el.innerText = txt;
-      el.style.left = `${x - 40}px`;
-      el.style.top = `${y - 20}px`;
+      el.className = 'fct'; el.style.color = color; el.innerText = txt;
+      el.style.left = `${x - 40}px`; el.style.top = `${y - 20}px`;
       document.body.appendChild(el);
       setTimeout(() => el.remove(), 1200);
     }
 
-    function triggerShake(element) {
-      element.classList.remove('shake');
-      void element.offsetWidth;
-      element.classList.add('shake');
-    }
+    function triggerShake(element) { element.classList.remove('shake'); void element.offsetWidth; element.classList.add('shake'); }
 
     window.onload = initApp;
   </script>
