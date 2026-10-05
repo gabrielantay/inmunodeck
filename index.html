@@ -23,7 +23,7 @@
     .screen { position: absolute; inset: 0; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 0.8s ease-in-out; background-size: cover; background-position: center; }
     .screen.active { opacity: 1; pointer-events: auto; }
 
-    /* PANTALLA 1: DRAFT */
+    /* DRAFT */
     #draft-screen { background: linear-gradient(135deg, #091325 0%, #1e293b 100%); }
     .draft-header { flex: 0 0 auto; padding: 15px 20px; text-align: center; background: rgba(0, 0, 0, 0.6); border-bottom: 3px solid var(--danger); }
     .draft-title { font-size: 26px; font-weight: 900; color: var(--accent); text-transform: uppercase; margin-bottom: 5px; }
@@ -51,7 +51,7 @@
     .btn-main:active { transform: translateY(4px); box-shadow: none; }
     .btn-main:disabled { background: #475569; opacity: 0.5; box-shadow: 0 6px 0 #1e293b; }
 
-    /* PANTALLA 2: COMBATE */
+    /* COMBATE */
     #battle-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.85) 100%); z-index: 1; }
     .battle-ui { position: relative; z-index: 2; display: flex; flex-direction: column; height: 100%; }
     
@@ -83,7 +83,6 @@
     .hand-container .c-bio-desc { display: none; }
     .hand-container .c-mechanic { font-size: 9px; padding: 2px; }
 
-    /* ALERTAS DE SISTEMA (CELULA DENDRITICA) */
     .system-alert { position: absolute; top: 120px; left: 0; right: 0; text-align: center; z-index: 50; pointer-events: none; }
     .alert-box { display: inline-block; background: rgba(168, 85, 247, 0.9); border: 2px solid #d8b4fe; padding: 8px 16px; border-radius: 20px; font-weight: 900; font-size: 12px; text-transform: uppercase; box-shadow: 0 4px 10px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s; }
 
@@ -98,16 +97,15 @@
     @keyframes shakeAnim { 10%, 90% { transform: translate3d(-6px, 0, 0); } 20%, 80% { transform: translate3d(12px, 0, 0); filter: brightness(2) saturate(3); } 30%, 50%, 70% { transform: translate3d(-15px, 0, 0); } 40%, 60% { transform: translate3d(15px, 0, 0); } }
     .damage-flash { animation: screenFlash 0.5s ease-out forwards; }
     @keyframes screenFlash { 0% { box-shadow: inset 0 0 0 0 transparent; } 50% { box-shadow: inset 0 0 150px 60px rgba(239,68,68,0.9); } 100% { box-shadow: inset 0 0 0 0 transparent; } }
-    .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.92); z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; padding: 20px; }
+    .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.95); z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; padding: 20px; }
     .modal-overlay.active { opacity: 1; pointer-events: auto; }
     .modal-title { font-size: 38px; font-weight: 900; text-transform: uppercase; margin-bottom: 15px; text-shadow: 0 0 25px currentColor; text-align: center; line-height: 1.1; }
-    .modal-desc { font-size: 16px; color: #e2e8f0; text-align: center; max-width: 90%; line-height: 1.5; margin-bottom: 30px; }
+    .modal-desc { font-size: 16px; color: #e2e8f0; text-align: center; max-width: 90%; line-height: 1.5; margin-bottom: 25px; }
   </style>
 </head>
 <body>
 
   <div id="app-container">
-    <!-- DRAFT -->
     <div id="draft-screen" class="screen active">
       <div class="draft-header">
         <div class="draft-title" id="draft-tissue-name">ANALIZANDO TEJIDO...</div>
@@ -125,7 +123,6 @@
       </div>
     </div>
 
-    <!-- COMBATE -->
     <div id="battle-screen" class="screen">
       <div id="battle-overlay"></div>
       <div class="battle-ui">
@@ -166,12 +163,15 @@
     <div id="end-modal" class="modal-overlay">
       <div id="end-title" class="modal-title"></div>
       <div id="end-desc" class="modal-desc"></div>
+      
+      <!-- CONTENEDOR DE VIDEO DINÁMICO -->
+      <div id="end-video-container" style="margin-bottom: 25px; border-radius: 8px; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.8); max-width: 90%; width: 400px;"></div>
+      
       <button class="btn-turn" style="padding: 15px 30px; font-size: 18px; box-shadow: 0 6px 0 #1d4ed8;" onclick="location.reload()">NUEVA INFECCIÓN</button>
     </div>
   </div>
 
   <script>
-    /* VARIABLES LOCALES (MANTENIDAS DE TUS SUBIDAS) */
     const IMG = {
       neutrofilo: 'neutrofilo.png',
       macrofago: 'macrofago.png',
@@ -183,7 +183,6 @@
       pathoVirus: 'virus.gif',
       pathoHelm: 'helminto.jpg',
       
-      /* NUEVAS CARTAS (Enlaces genéricos temporales. Sube tus propias imágenes luego y cámbialas) */
       eosinofilo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Blausen_0352_Eosinophil_%28crop%29.png/400px-Blausen_0352_Eosinophil_%28crop%29.png',
       complemento: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Complement_system.png/400px-Complement_system.png',
       interferon: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Interferon_signaling.png/400px-Interferon_signaling.png',
@@ -191,13 +190,20 @@
       mastocito: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Mast_cells_in_mastocytosis_-_very_high_mag.jpg/400px-Mast_cells_in_mastocytosis_-_very_high_mag.jpg'
     };
 
+    /* SCENARIOS: Aquí especificas el nombre del archivo de video (.mp4) a reproducir al ganar */
     const SCENARIOS = [
       { id: 'piel', name: 'Epidermis', enemy: 'Bacteria Extracelular', type: 'bacteria', hp: 160, atk: 25, bg: IMG.bgPiel, avatar: IMG.pathoBact, 
-        vuln: 'Vulnerable a: Fagocitosis M1 y Complemento. Amenaza tisular alta.' },
+        vuln: 'Vulnerable a: Fagocitosis M1 y Complemento. Amenaza tisular alta.',
+        video: 'video_bacteria.mp4' 
+      },
       { id: 'mucosa', name: 'Epitelio Respiratorio', enemy: 'Virus Intracelular', type: 'virus', hp: 120, atk: 35, bg: IMG.bgMucosa, avatar: IMG.pathoVirus,
-        vuln: 'Vulnerable a: Células NK e Interferón. Inmune a Neutrófilos y Complemento.' },
+        vuln: 'Vulnerable a: Células NK e Interferón. Inmune a Neutrófilos y Complemento.',
+        video: 'video_virus.mp4'
+      },
       { id: 'galt', name: 'GALT Intestinal', enemy: 'Macroparásito Helminto', type: 'helminto', hp: 200, atk: 20, bg: IMG.bgGalt, avatar: IMG.pathoHelm,
-        vuln: 'Vulnerable a: Eosinófilos y Mastocitos. La fagocitosis es ineficaz por su tamaño.' }
+        vuln: 'Vulnerable a: Eosinófilos y Mastocitos. La fagocitosis es ineficaz por su tamaño.',
+        video: 'video_helminto.mp4' 
+      }
     ];
 
     const CARDS = [
@@ -218,9 +224,8 @@
     let atp = 4, maxAtp = 4;
     let turnState = 'PLAYER';
     let opsonized = false, shielded = false, stunned = false;
-    let adaptiveTimer = -1; // -1 inactivo, 2 y 1 migrando, 0 ataca
+    let adaptiveTimer = -1;
 
-    /* --- INICIO --- */
     function initApp() {
       currentScen = SCENARIOS[Math.floor(Math.random() * SCENARIOS.length)];
       document.getElementById('draft-tissue-name').innerText = currentScen.name;
@@ -257,7 +262,6 @@
       updateBattleUI();
     }
 
-    /* --- COMBATE --- */
     function updateBattleUI() {
       document.getElementById('player-bar').style.width = `${Math.max(0, playerHp)}%`;
       document.getElementById('player-hp-txt').innerText = `${Math.max(0, playerHp)} / 100`;
@@ -402,9 +406,24 @@
       turnState = 'GAMEOVER';
       setTimeout(() => {
         const modal = document.getElementById('end-modal');
+        const videoContainer = document.getElementById('end-video-container');
+        
         document.getElementById('end-title').innerText = title;
         document.getElementById('end-title').style.color = color;
         document.getElementById('end-desc').innerText = desc;
+        
+        videoContainer.innerHTML = '';
+        
+        // Inyecta el video solo si el escenario lo tiene y es una victoria
+        if (currentScen.video && currentScen.video !== '' && color === '#22c55e') {
+          videoContainer.innerHTML = `
+            <video autoplay loop controls playsinline style="max-height: 250px; width: 100%; object-fit: cover; border-radius: 8px;">
+              <source src="${currentScen.video}" type="video/mp4">
+              Tu navegador no soporta videos HTML5.
+            </video>
+          `;
+        }
+
         modal.classList.add('active');
       }, 800);
     }
