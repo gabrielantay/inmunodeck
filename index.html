@@ -173,8 +173,9 @@
 
   <script>
     const IMG = {
-      neutrofilo: 'neutrofilo.png',
-      macrofago: 'macrofago.png',
+      neutrofilo: 'neutrofilo.jpg',
+      macrofago1: 'macrofago1.jpg',
+      macrofago2: 'macrofago2.jpg',
       nk: 'nk.jpg',
       bgPiel: 'piel.jpg',
       bgMucosa: 'epiteliomucoso.jpg',
@@ -208,8 +209,8 @@
 
     const CARDS = [
       { id: 'neutro', name: 'Neutrófilo', cost: 1, type: 'atk', val: 30, img: IMG.neutrofilo, bio: 'Fagocito rápido.', mechanic: 'Daño: 30. (Ineficaz vs Helmintos y Virus)' },
-      { id: 'macroM1', name: 'Macrófago M1', cost: 2, type: 'atk', val: 50, img: IMG.macrofago, bio: 'Estallido respiratorio lítico.', mechanic: 'Daño masivo: 50. (Bajo vs Virus)' },
-      { id: 'macroM2', name: 'Macrófago M2', cost: 2, type: 'heal', val: 40, img: IMG.macrofago, bio: 'Regenerador tisular y angiogénesis.', mechanic: 'Repara +40 HP a la barrera del hospedero.' },
+      { id: 'macroM1', name: 'Macrófago M1', cost: 2, type: 'atk', val: 50, img: IMG.macrofago1, bio: 'Estallido respiratorio lítico.', mechanic: 'Daño masivo: 50. (Bajo vs Virus)' },
+      { id: 'macroM2', name: 'Macrófago M2', cost: 2, type: 'heal', val: 40, img: IMG.macrofago2, bio: 'Regenerador tisular y angiogénesis.', mechanic: 'Repara +40 HP a la barrera del hospedero.' },
       { id: 'nk', name: 'Célula NK', cost: 2, type: 'atk', val: 40, img: IMG.nk, bio: 'Induce apoptosis en células infectadas.', mechanic: 'Daño: 40. Crítico (x2) contra Virus.' },
       { id: 'eosino', name: 'Eosinófilo', cost: 2, type: 'atk', val: 25, img: IMG.eosinofilo, bio: 'Secreta Proteína Básica Mayor.', mechanic: 'Daño: 25. Letal (x3) contra Helmintos.' },
       { id: 'masto', name: 'Mastocito', cost: 1, type: 'stun', img: IMG.mastocito, bio: 'Secreción masiva de histamina.', mechanic: 'Aturde al patógeno. Salta su próximo ataque.' },
