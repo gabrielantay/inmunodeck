@@ -275,11 +275,19 @@
     let opsonized = false, shielded = false, stunned = false;
     let adaptiveTimer = -1;
 
+        function closeIntro() {
+      document.getElementById('intro-screen').classList.remove('active');
+      document.getElementById('draft-screen').classList.add('active');
+    }
+
     function initApp() {
       currentScen = SCENARIOS[Math.floor(Math.random() * SCENARIOS.length)];
       document.getElementById('draft-tissue-name').innerText = currentScen.name;
       document.getElementById('draft-pathogen-name').innerText = `${currentScen.enemy} (${currentScen.type.toUpperCase()})`;
       document.getElementById('draft-vulnerability').innerText = currentScen.vuln;
+      
+      // Inyección del avatar del patógeno en la interfaz
+      document.getElementById('draft-pathogen-img').style.backgroundImage = `url('${currentScen.avatar}')`;
       
       const grid = document.getElementById('draft-grid');
       CARDS.forEach(c => {
@@ -290,6 +298,7 @@
         grid.appendChild(el);
       });
     }
+
 
     function toggleSelection(cardObj, element) {
       const idx = deck.indexOf(cardObj);
