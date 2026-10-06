@@ -140,7 +140,17 @@
 </head>
 <body>
 
-  <div id="app-container">
+  <div id="app-container"> 
+        <div id="intro-screen" class="screen active" style="z-index: 10; background: var(--bg-dark); padding: 30px; justify-content: center; align-items: center; text-align: center;">
+      <h1 style="color: var(--accent); font-size: 32px; font-weight: 900; margin-bottom: 20px; text-transform: uppercase;">InmunoDeck</h1>
+      <div style="background: rgba(15, 23, 42, 0.9); border: 2px solid var(--border); padding: 20px; border-radius: 10px; font-size: 16px; color: #cbd5e1; line-height: 1.6; max-width: 500px; text-align: left; margin-bottom: 30px;">
+        <p><strong>Misión:</strong> Erradicar la amenaza patógena antes de que la integridad tisular (Hospedero) llegue a cero.</p><br>
+        <p><strong>Fase 1 (Reclutamiento):</strong> Selecciona 5 efectores inmunológicos adaptados a la vulnerabilidad del patógeno.</p><br>
+        <p><strong>Fase 2 (Respuesta):</strong> Utiliza ATP (⚡) para desplegar células y proteínas. El ATP se recarga en cada turno.</p>
+      </div>
+      <button class="btn-main" style="max-width: 300px;" onclick="closeIntro()">INICIAR SIMULACIÓN</button>
+    </div>
+
     <div id="draft-screen" class="screen active">
       <div class="draft-header">
         <div class="draft-title" id="draft-tissue-name">ANALIZANDO TEJIDO...</div>
