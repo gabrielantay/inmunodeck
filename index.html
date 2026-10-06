@@ -136,6 +136,34 @@
     .modal-overlay.active { opacity: 1; pointer-events: auto; }
     .modal-title { font-size: 38px; font-weight: 900; text-transform: uppercase; margin-bottom: 15px; text-shadow: 0 0 25px currentColor; text-align: center; line-height: 1.1; }
     .modal-desc { font-size: 16px; color: #e2e8f0; text-align: center; max-width: 90%; line-height: 1.5; margin-bottom: 25px; }
+    .projectile-player {
+      position: absolute;
+      width: 55px; 
+      height: 55px;
+      border-radius: 50%;
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 0 20px var(--accent), inset 0 0 10px #000;
+      z-index: 300;
+      pointer-events: none;
+      transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    
+    .status-opsonized {
+      position: absolute; 
+      top: 20px; 
+      left: -10px;
+      background: #a855f7; 
+      border: 2px solid #fff; 
+      border-radius: 50%;
+      width: 40px; 
+      height: 40px; 
+      display: none; 
+      justify-content: center; 
+      align-items: center; 
+      font-size: 20px; 
+      box-shadow: 0 0 15px #a855f7;
+    }
   </style>
 </head>
 <body>
@@ -193,6 +221,7 @@
         <div class="arena" id="arena">
           <div id="enemy-avatar" class="enemy-avatar">
             <div id="status-stun" class="status-icon">😵</div>
+            <div id="status-opsonized" class="status-opsonized">🎯</div>
           </div>
         </div>
 
@@ -326,7 +355,10 @@
       document.getElementById('enemy-bar').style.width = `${Math.max(0, (enemyHp / maxEnemyHp) * 100)}%`;
       document.getElementById('enemy-hp-txt').innerText = `${Math.max(0, enemyHp)} / ${maxEnemyHp}`;
       document.getElementById('energy-val').innerText = atp;
+      
+      // Control de marcadores de estado visuales
       document.getElementById('status-stun').style.display = stunned ? 'flex' : 'none';
+      document.getElementById('status-opsonized').style.display = opsonized ? 'flex' : 'none';
       
       const alertBox = document.getElementById('sys-alert');
       if (adaptiveTimer === 2) { alertBox.innerText = "Dendrítica migrando: Faltan 2 turnos"; alertBox.style.opacity = 1; }
@@ -336,45 +368,96 @@
       const hand = document.getElementById('battle-hand');
       hand.innerHTML = '';
       deck.forEach(c => {
-        const isDisabled = turnState !== 'PLAYER' || atp < c.cost || (c.id === 'dendro' && adaptiveTimer > -1);
+        // Cálculo de costo dinámico por sinergia
+        let displayCost = c.cost;
+        if (opsonized && (c.id === 'neutro' || c.id === 'macroM1' || c.id === 'macroM2')) displayCost = 0;
+        
+        const isDisabled = turnState !== 'PLAYER' || atp < displayCost || (c.id === 'dendro' && adaptiveTimer > -1);
         const el = document.createElement('div');
         el.className = `card-bio ${isDisabled ? 'disabled' : ''}`;
-        el.innerHTML = `<div class="c-img" style="background-image: url('${c.img}')"></div><div class="c-cost">${c.cost}</div><div class="c-info"><div class="c-name">${c.name}</div><div class="c-mechanic">${c.mechanic}</div></div>`;
-        el.onclick = () => executePlayerAction(c);
+        
+        // Si cuesta 0 por sinergia, resaltamos el costo
+        const costStyle = displayCost === 0 ? 'background: #a855f7; color: white; box-shadow: 0 0 10px #a855f7;' : '';
+        
+        el.innerHTML = `<div class="c-img" style="background-image: url('${c.img}')"></div><div class="c-cost" style="${costStyle}">${displayCost}</div><div class="c-info"><div class="c-name">${c.name}</div><div class="c-mechanic">${c.mechanic}</div></div>`;
+        
+        // Pasamos e.currentTarget para obtener las coordenadas físicas de la carta tocada
+        el.onclick = (e) => executePlayerAction(c, e.currentTarget);
         hand.appendChild(el);
       });
     }
 
-    function executePlayerAction(card) {
-      if (turnState !== 'PLAYER' || atp < card.cost || (card.id === 'dendro' && adaptiveTimer > -1)) return;
-      atp -= card.cost;
-      
-      const eAvatar = document.getElementById('enemy-avatar');
-      const rect = eAvatar.getBoundingClientRect();
-      const cX = rect.left + rect.width / 2, cY = rect.top + rect.height / 2;
-
-      if (card.type === 'atk') {
-        let dmg = card.val;
-        if (card.id === 'eosino' && currentScen.type === 'helminto') dmg *= 3;
-        else if (card.id === 'nk' && currentScen.type === 'virus') dmg *= 2;
-        else if ((card.id === 'neutro' || card.id === 'macroM1') && (currentScen.type === 'helminto' || currentScen.type === 'virus')) dmg = 5;
-        if (opsonized) { dmg = Math.floor(dmg * 1.5); opsonized = false; }
-        
-        enemyHp -= dmg;
-        spawnText(`-${dmg}`, '#ef4444', cX, cY);
-        triggerShake(eAvatar);
-      } 
-      else if (card.type === 'heal') {
-        playerHp = Math.min(100, playerHp + card.val);
-        spawnText(`+${card.val}`, '#22c55e', cX, cY + 40);
+    function executePlayerAction(card, cardElement) {
+      // 1. Verificación de Sinergia y Economía
+      let cost = card.cost;
+      let isSynergy = false;
+      if (opsonized && (card.id === 'neutro' || card.id === 'macroM1' || card.id === 'macroM2')) {
+        cost = 0;
+        isSynergy = true;
       }
-      else if (card.type === 'stun') { stunned = true; spawnText("ATURDIDO", '#eab308', cX, cY); }
-      else if (card.type === 'buff') { opsonized = true; spawnText("OPSONIZADO", '#a855f7', cX, cY); }
-      else if (card.type === 'shield') { shielded = true; spawnText("ESCUDO IFN", '#38bdf8', cX, cY); }
-      else if (card.type === 'ultimate') { adaptiveTimer = 2; spawnText("APC MIGRANDO", '#d8b4fe', cX, cY); }
 
-      updateBattleUI();
-      checkVictory();
+      if (turnState !== 'PLAYER' || atp < cost || (card.id === 'dendro' && adaptiveTimer > -1)) return;
+      
+      atp -= cost;
+      
+      // 2. Extraer coordenadas topográficas
+      const cardRect = cardElement.getBoundingClientRect();
+      const eAvatar = document.getElementById('enemy-avatar');
+      const eRect = eAvatar.getBoundingClientRect();
+      
+      const startX = cardRect.left + cardRect.width / 2;
+      const startY = cardRect.top + cardRect.height / 2;
+      const endX = eRect.left + eRect.width / 2;
+      const endY = eRect.top + eRect.height / 2;
+
+      // 3. Crear clon balístico y posicionarlo sobre la mano
+      const proj = document.createElement('div');
+      proj.className = 'projectile-player';
+      proj.style.backgroundImage = `url('${card.img}')`;
+      proj.style.left = `${startX - 27.5}px`; 
+      proj.style.top = `${startY - 27.5}px`;
+      document.body.appendChild(proj);
+
+      // Forzar renderizado para activar la transición CSS
+      void proj.offsetWidth; 
+
+      // Lanzar proyectil hacia el patógeno
+      proj.style.transform = `translate(${endX - startX}px, ${endY - startY}px) scale(1.3) rotate(360deg)`;
+
+      // 4. Resolver impacto asíncrono
+      setTimeout(() => {
+        proj.remove(); // Destruir el proyectil
+
+        if (card.type === 'atk') {
+          let dmg = card.val;
+          if (card.id === 'eosino' && currentScen.type === 'helminto') dmg *= 3;
+          else if (card.id === 'nk' && currentScen.type === 'virus') dmg *= 2;
+          else if ((card.id === 'neutro' || card.id === 'macroM1') && (currentScen.type === 'helminto' || currentScen.type === 'virus')) dmg = 5;
+          
+          if (opsonized) { 
+             dmg = Math.floor(dmg * 1.5); 
+             if (isSynergy) {
+               spawnText("FAGOCITOSIS MEJORADA", '#a855f7', endX, endY - 50);
+               opsonized = false; // El macrófago "consume" la diana
+             }
+          }
+          
+          enemyHp -= dmg;
+          spawnText(`-${dmg}`, '#ef4444', endX, endY);
+          triggerShake(eAvatar);
+        } 
+        else if (card.type === 'heal') {
+          playerHp = Math.min(100, playerHp + card.val);
+          spawnText(`+${card.val}`, '#22c55e', endX, endY + 40);
+        }
+        else if (card.type === 'stun') { stunned = true; spawnText("ATURDIDO", '#eab308', endX, endY); }
+        else if (card.type === 'buff') { opsonized = true; spawnText("OPSONIZADO", '#a855f7', endX, endY); }
+        else if (card.type === 'shield') { shielded = true; spawnText("ESCUDO IFN", '#38bdf8', endX, endY); }
+        else if (card.type === 'ultimate') { adaptiveTimer = 2; spawnText("APC MIGRANDO", '#d8b4fe', endX, endY); }
+
+        updateBattleUI(); // Sincronizar HUD y marcadores tras el impacto
+        checkVictory();
+      }, 400); // 400ms = Duración exacta de la transición de vuelo
     }
 
     function checkVictory() {
