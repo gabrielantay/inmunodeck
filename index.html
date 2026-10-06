@@ -150,15 +150,18 @@
       </div>
       <button class="btn-main" style="max-width: 300px;" onclick="closeIntro()">INICIAR SIMULACIÓN</button>
     </div>
-
-    <div id="draft-screen" class="screen active">
-      <div class="draft-header">
+  <div id="draft-screen" class="screen">
+            <div class="draft-header">
         <div class="draft-title" id="draft-tissue-name">ANALIZANDO TEJIDO...</div>
-        <div class="pathogen-intel">
-          <div class="pathogen-name">🚨 <span id="draft-pathogen-name"></span></div>
-          <div class="pathogen-vuln" id="draft-vulnerability"></div>
+        <div class="pathogen-intel" style="display: flex; align-items: center; gap: 15px; text-align: left;">
+          <div id="draft-pathogen-img" style="width: 70px; height: 70px; background-size: contain; background-position: center; background-repeat: no-repeat; flex-shrink: 0; filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.8));"></div>
+          <div>
+            <div class="pathogen-name" style="justify-content: flex-start; margin-bottom: 4px;">🚨 <span id="draft-pathogen-name"></span></div>
+            <div class="pathogen-vuln" id="draft-vulnerability"></div>
+          </div>
         </div>
       </div>
+
       <div class="draft-body">
         <div style="font-size: 13px; color: #94a3b8; margin-bottom: 10px; font-weight: bold; text-align: center;">Ensambla tu respuesta inmune (<span id="draft-count">0</span>/5 cartas)</div>
         <div class="draft-grid" id="draft-grid"></div>
