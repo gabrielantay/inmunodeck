@@ -293,10 +293,9 @@
       { id: 'masto', name: 'Mastocito', cost: 1, type: 'stun', img: IMG.mastocito, bio: 'Secreción masiva de histamina.', mechanic: 'Aturde al patógeno. Salta su próximo ataque.' },
       { id: 'comp', name: 'Complemento', cost: 1, type: 'buff', img: IMG.complemento, bio: 'Lisis y opsonización.', mechanic: 'Marca al patógeno: +50% de daño al próximo ataque.' },
       { id: 'ifn', name: 'Interferón α/β', cost: 1, type: 'shield', img: IMG.interferon, bio: 'Crea resistencia celular.', mechanic: 'Reduce el ataque enemigo a la mitad en su turno.' },
-      { id: 'dendro', name: 'C. Dendrítica', cost: 3, type: 'ultimate', img: IMG.dendritica, bio: 'Puente a la inmunidad adaptativa.', mechanic: 'Migra al ganglio. En 2 turnos, ataque Linfocitario Letal (-120 HP).' }
+      { id: 'dendro', name: 'C. Dendrítica', cost: 3, type: 'ultimate', img: IMG.dendritica, bio: 'Puente a la inmunidad adaptativa.', mechanic: 'Migra al ganglio. En 2 turnos, ataque Linfocitario Letal (-120 HP).' },
       { id: 'langerhans', name: 'C. Langerhans', cost: 1, type: 'buff', img: IMG.dendritica, bio: 'Centinela epidérmico.', mechanic: 'Alerta tisular: Recupera +1 ATP inmediato.' },
       { id: 'trm', name: 'T Residente', cost: 2, type: 'atk', val: 35, img: IMG.neutrofilo, bio: 'Vigilancia tisular periférica.', mechanic: 'Daño rápido de choque tisular: 35.' }
-    
     ];
 
     let currentScen = null;
@@ -308,9 +307,10 @@
     let adaptiveTimer = -1;
     let dampsLevel = 0;
 
-        function closeIntro() {
+    function closeIntro() {
       document.getElementById('intro-screen').classList.remove('active');
       document.getElementById('draft-screen').classList.add('active');
+      initApp();
     }
 
     function initApp() {
@@ -319,10 +319,10 @@
       document.getElementById('draft-pathogen-name').innerText = `${currentScen.enemy} (${currentScen.type.toUpperCase()})`;
       document.getElementById('draft-vulnerability').innerText = currentScen.vuln;
       
-      // Inyección del avatar del patógeno en la interfaz
       document.getElementById('draft-pathogen-img').style.backgroundImage = `url('${currentScen.avatar}')`;
       
       const grid = document.getElementById('draft-grid');
+      grid.innerHTML = '';
       CARDS.forEach(c => {
         const el = document.createElement('div');
         el.className = 'card-bio';
@@ -331,7 +331,6 @@
         grid.appendChild(el);
       });
     }
-
 
     function toggleSelection(cardObj, element) {
       const idx = deck.indexOf(cardObj);
