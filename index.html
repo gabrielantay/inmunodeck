@@ -318,7 +318,6 @@
       document.getElementById('draft-tissue-name').innerText = currentScen.name;
       document.getElementById('draft-pathogen-name').innerText = `${currentScen.enemy} (${currentScen.type.toUpperCase()})`;
       document.getElementById('draft-vulnerability').innerText = currentScen.vuln;
-      
       document.getElementById('draft-pathogen-img').style.backgroundImage = `url('${currentScen.avatar}')`;
       
       const grid = document.getElementById('draft-grid');
@@ -349,8 +348,8 @@
       document.getElementById('enemy-name').innerText = currentScen.enemy;
       document.getElementById('enemy-avatar').style.backgroundImage = `url('${currentScen.avatar}')`;
       enemyHp = maxEnemyHp = currentScen.hp;
-      dampsLevel = 0;
-      updateBattleUI();  
+      dampsLevel = 0; // Inicializar DAMPs al entrar a combate
+      updateBattleUI();
     }
 
     function updateBattleUI() {
