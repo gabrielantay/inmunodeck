@@ -363,10 +363,19 @@
       document.getElementById('status-stun').style.display = stunned ? 'flex' : 'none';
       document.getElementById('status-opsonized').style.display = opsonized ? 'flex' : 'none';
       
-      const alertBox = document.getElementById('sys-alert');
-      if (adaptiveTimer === 2) { alertBox.innerText = "Dendrítica migrando: Faltan 2 turnos"; alertBox.style.opacity = 1; }
-      else if (adaptiveTimer === 1) { alertBox.innerText = "Expansión Clonal (Linfocitos): Falta 1 turno"; alertBox.style.opacity = 1; }
-      else if (adaptiveTimer === -1) { alertBox.style.opacity = 0; }
+     const alertBox = document.getElementById('sys-alert');
+      if (dampsLevel > 0) {
+        alertBox.innerText = `⚠️ DAMPs Nivel ${dampsLevel} (Estrés Tisular)`;
+        alertBox.style.opacity = 1;
+      } else if (adaptiveTimer === 2) { 
+        alertBox.innerText = "Dendrítica migrando: Faltan 2 turnos"; 
+        alertBox.style.opacity = 1; 
+      } else if (adaptiveTimer === 1) { 
+        alertBox.innerText = "Expansión Clonal (Linfocitos): Falta 1 turno"; 
+        alertBox.style.opacity = 1; 
+      } else { 
+        alertBox.style.opacity = 0; 
+      }
       
       const hand = document.getElementById('battle-hand');
       hand.innerHTML = '';
