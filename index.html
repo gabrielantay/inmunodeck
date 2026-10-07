@@ -278,9 +278,9 @@
         vuln: 'Vulnerable a: Células NK e Interferón. Inmune a Neutrófilos y Complemento.',
         video: 'video_macrofago_virus_celula_infectada.mp4'
       },
-      { id: 'galt', name: 'GALT Intestinal', enemy: 'Macroparásito Helminto', type: 'helminto', hp: 200, atk: 20, bg: IMG.bgGalt, avatar: IMG.pathoHelm,
-        vuln: 'Vulnerable a: Eosinófilos y Mastocitos. La fagocitosis es ineficaz por su tamaño.',
-        video: 'video_helminto.mp4' 
+      { id: 'galt', name: 'GALT Intestinal', enemy: 'E. coli Enteropatógena', type: 'bacteria', hp: 200, atk: 20, bg: IMG.bgGalt, avatar: IMG.pathoBact,
+        vuln: 'Vulnerable a: Opsonización y Macrófagos M1. Erosión de microvellosidades.',
+        video: 'video_helminto.mp4'
       }
     ];
 
@@ -294,6 +294,9 @@
       { id: 'comp', name: 'Complemento', cost: 1, type: 'buff', img: IMG.complemento, bio: 'Lisis y opsonización.', mechanic: 'Marca al patógeno: +50% de daño al próximo ataque.' },
       { id: 'ifn', name: 'Interferón α/β', cost: 1, type: 'shield', img: IMG.interferon, bio: 'Crea resistencia celular.', mechanic: 'Reduce el ataque enemigo a la mitad en su turno.' },
       { id: 'dendro', name: 'C. Dendrítica', cost: 3, type: 'ultimate', img: IMG.dendritica, bio: 'Puente a la inmunidad adaptativa.', mechanic: 'Migra al ganglio. En 2 turnos, ataque Linfocitario Letal (-120 HP).' }
+      { id: 'langerhans', name: 'C. Langerhans', cost: 1, type: 'buff', img: IMG.dendritica, bio: 'Centinela epidérmico.', mechanic: 'Alerta tisular: Recupera +1 ATP inmediato.' },
+      { id: 'trm', name: 'T Residente', cost: 2, type: 'atk', val: 35, img: IMG.neutrofilo, bio: 'Vigilancia tisular periférica.', mechanic: 'Daño rápido de choque tisular: 35.' }
+    
     ];
 
     let currentScen = null;
@@ -303,6 +306,7 @@
     let turnState = 'PLAYER';
     let opsonized = false, shielded = false, stunned = false;
     let adaptiveTimer = -1;
+    let dampsLevel = 0;
 
         function closeIntro() {
       document.getElementById('intro-screen').classList.remove('active');
@@ -346,7 +350,8 @@
       document.getElementById('enemy-name').innerText = currentScen.enemy;
       document.getElementById('enemy-avatar').style.backgroundImage = `url('${currentScen.avatar}')`;
       enemyHp = maxEnemyHp = currentScen.hp;
-      updateBattleUI();
+      dampsLevel = 0;
+      updateBattleUI();  
     }
 
     function updateBattleUI() {
@@ -430,6 +435,11 @@
 
         if (card.type === 'atk') {
           let dmg = card.val;
+          
+          // BONIFICACIÓN POR DAMPs (Estrés Tisular / Inflamación)
+          if (dampsLevel > 0) dmg += (dampsLevel * 3);
+
+          // Tus reglas de efectividad originales
           if (card.id === 'eosino' && currentScen.type === 'helminto') dmg *= 3;
           else if (card.id === 'nk' && currentScen.type === 'virus') dmg *= 2;
           else if ((card.id === 'neutro' || card.id === 'macroM1') && (currentScen.type === 'helminto' || currentScen.type === 'virus')) dmg = 5;
@@ -438,9 +448,14 @@
              dmg = Math.floor(dmg * 1.5); 
              if (isSynergy) {
                spawnText("FAGOCITOSIS MEJORADA", '#a855f7', endX, endY - 50);
-               opsonized = false; // El macrófago "consume" la diana
+               opsonized = false;
              }
           }
+          
+          enemyHp -= dmg;
+          spawnText(`-${dmg}`, '#ef4444', endX, endY);
+          triggerShake(eAvatar);
+        }
           
           enemyHp -= dmg;
           spawnText(`-${dmg}`, '#ef4444', endX, endY);
@@ -448,10 +463,19 @@
         } 
         else if (card.type === 'heal') {
           playerHp = Math.min(100, playerHp + card.val);
+          dampsLevel = Math.max(0, dampsLevel - 1); // La reparación reduce DAMPs
           spawnText(`+${card.val}`, '#22c55e', endX, endY + 40);
         }
         else if (card.type === 'stun') { stunned = true; spawnText("ATURDIDO", '#eab308', endX, endY); }
-        else if (card.type === 'buff') { opsonized = true; spawnText("OPSONIZADO", '#a855f7', endX, endY); }
+        else if (card.type === 'buff') { 
+          if(card.id === 'langerhans') { 
+            atp = Math.min(maxAtp, atp + 1); 
+            spawnText("ALERTA CENTINELA", '#38bdf8', endX, endY); 
+          } else { 
+            opsonized = true; 
+            spawnText("OPSONIZADO", '#a855f7', endX, endY); 
+          }
+        }
         else if (card.type === 'shield') { shielded = true; spawnText("ESCUDO IFN", '#38bdf8', endX, endY); }
         else if (card.type === 'ultimate') { adaptiveTimer = 2; spawnText("APC MIGRANDO", '#d8b4fe', endX, endY); }
 
@@ -514,6 +538,7 @@
           setTimeout(() => proj.remove(), 300);
 
           playerHp -= eDmg;
+          dampsLevel++; // El daño tisular libera DAMPs (Estrés celular)
           spawnText(`-${eDmg}`, '#ef4444', pRect.left + pRect.width/2, pRect.top - 20);
           
           document.body.classList.add('damage-flash');
