@@ -164,6 +164,15 @@
       font-size: 20px; 
       box-shadow: 0 0 15px #a855f7;
     }
+    @keyframes pulseGlow {
+      0% { transform: scale(1); box-shadow: 0 4px 0 #1d4ed8, 0 0 0 rgba(59, 130, 246, 0); }
+      50% { transform: scale(1.05); box-shadow: 0 4px 0 #1d4ed8, 0 0 20px rgba(59, 130, 246, 1); filter: brightness(1.2); }
+      100% { transform: scale(1); box-shadow: 0 4px 0 #1d4ed8, 0 0 0 rgba(59, 130, 246, 0); }
+    }
+    .btn-pulse {
+      animation: pulseGlow 1.2s infinite ease-in-out;
+      background: #2563eb !important;
+    }
   </style>
 </head>
 <body>
@@ -362,7 +371,14 @@
       // Control de marcadores de estado visuales
       document.getElementById('status-stun').style.display = stunned ? 'flex' : 'none';
       document.getElementById('status-opsonized').style.display = opsonized ? 'flex' : 'none';
-      
+      // Control de visibilidad del botón de pasar turno según el ATP disponible
+      const btnEndTurn = document.getElementById('btn-end-turn');
+      // Si el ATP es 0 o menor que el costo mínimo de la mano, hacemos que parpadee para guiar al usuario
+      if (atp === 0) {
+        btnEndTurn.classList.add('btn-pulse');
+      } else {
+        btnEndTurn.classList.remove('btn-pulse');
+      }
      const alertBox = document.getElementById('sys-alert');
       if (dampsLevel > 0) {
         alertBox.innerText = `⚠️ DAMPs Nivel ${dampsLevel} (Estrés Tisular)`;
