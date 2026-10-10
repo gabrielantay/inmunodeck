@@ -173,6 +173,38 @@
       animation: pulseGlow 1.2s infinite ease-in-out;
       background: #2563eb !important;
     }
+    /* SISTEMA DE COLOR POR TAXONOMÍA BIOLÓGICA */
+    .card-bio.cat-cell {
+      border-color: #38bdf8;
+    }
+    .card-bio.cat-cell.selected {
+      border-color: #38bdf8;
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.8);
+    }
+
+    .card-bio.cat-soluble {
+      border-color: #10b981;
+    }
+    .card-bio.cat-soluble.selected {
+      border-color: #10b981;
+      box-shadow: 0 0 16px rgba(16, 185, 129, 0.8);
+    }
+
+    .card-bio.cat-signaling {
+      border-color: #f59e0b;
+    }
+    .card-bio.cat-signaling.selected {
+      border-color: #f59e0b;
+      box-shadow: 0 0 16px rgba(245, 158, 11, 0.8);
+    }
+
+    .card-bio.cat-vasoactive {
+      border-color: #f97316;
+    }
+    .card-bio.cat-vasoactive.selected {
+      border-color: #f97316;
+      box-shadow: 0 0 16px rgba(249, 115, 22, 0.8);
+    }
   </style>
 </head>
 <body>
@@ -294,17 +326,17 @@
     ];
 
     const CARDS = [
-      { id: 'neutro', name: 'Neutrófilo', cost: 1, type: 'atk', val: 30, img: IMG.neutrofilo, bio: 'Fagocito rápido.', mechanic: 'Daño: 30. (Ineficaz vs Helmintos y Virus)' },
-      { id: 'macroM1', name: 'Macrófago M1', cost: 2, type: 'atk', val: 50, img: IMG.macrofago1, bio: 'Estallido respiratorio lítico.', mechanic: 'Daño masivo: 50. (Bajo vs Virus)' },
-      { id: 'macroM2', name: 'Macrófago M2', cost: 2, type: 'heal', val: 40, img: IMG.macrofago2, bio: 'Regenerador tisular y angiogénesis.', mechanic: 'Repara +40 HP a la barrera del hospedero.' },
-      { id: 'nk', name: 'Célula NK', cost: 2, type: 'atk', val: 40, img: IMG.nk, bio: 'Induce apoptosis en células infectadas.', mechanic: 'Daño: 40. Crítico (x2) contra Virus.' },
-      { id: 'eosino', name: 'Eosinófilo', cost: 2, type: 'atk', val: 25, img: IMG.eosinofilo, bio: 'Secreta Proteína Básica Mayor.', mechanic: 'Daño: 25. Letal (x3) contra Helmintos.' },
-      { id: 'masto', name: 'Mastocito', cost: 1, type: 'stun', img: IMG.mastocito, bio: 'Secreción masiva de histamina.', mechanic: 'Aturde al patógeno. Salta su próximo ataque.' },
-      { id: 'comp', name: 'Complemento', cost: 1, type: 'buff', img: IMG.complemento, bio: 'Lisis y opsonización.', mechanic: 'Marca al patógeno: +50% de daño al próximo ataque.' },
-      { id: 'ifn', name: 'Interferón α/β', cost: 1, type: 'shield', img: IMG.interferon, bio: 'Crea resistencia celular.', mechanic: 'Reduce el ataque enemigo a la mitad en su turno.' },
-      { id: 'dendro', name: 'C. Dendrítica', cost: 3, type: 'ultimate', img: IMG.dendritica, bio: 'Puente a la inmunidad adaptativa.', mechanic: 'Migra al ganglio. En 2 turnos, ataque Linfocitario Letal (-120 HP).' },
-      { id: 'langerhans', name: 'C. Langerhans', cost: 1, type: 'buff', img: IMG.dendritica, bio: 'Centinela epidérmico.', mechanic: 'Alerta tisular: Recupera +1 ATP inmediato.' },
-      { id: 'trm', name: 'T Residente', cost: 2, type: 'atk', val: 35, img: IMG.neutrofilo, bio: 'Vigilancia tisular periférica.', mechanic: 'Daño rápido de choque tisular: 35.' }
+      { id: 'neutro', name: 'Neutrófilo', category: 'cat-cell', cost: 1, type: 'atk', val: 30, img: IMG.neutrofilo, bio: 'Fagocito rápido.', mechanic: 'Daño: 30. (Ineficaz vs Helmintos y Virus)' },
+      { id: 'macroM1', name: 'Macrófago M1', category: 'cat-cell', cost: 2, type: 'atk', val: 50, img: IMG.macrofago1, bio: 'Estallido respiratorio lítico.', mechanic: 'Daño masivo: 50. (Bajo vs Virus)' },
+      { id: 'macroM2', name: 'Macrófago M2', category: 'cat-cell', cost: 2, type: 'heal', val: 40, img: IMG.macrofago2, bio: 'Regenerador tisular y angiogénesis.', mechanic: 'Repara +40 HP a la barrera del hospedero.' },
+      { id: 'nk', name: 'Célula NK', category: 'cat-cell', cost: 2, type: 'atk', val: 40, img: IMG.nk, bio: 'Induce apoptosis en células infectadas.', mechanic: 'Daño: 40. Crítico (x2) contra Virus.' },
+      { id: 'eosino', name: 'Eosinófilo', category: 'cat-cell', cost: 2, type: 'atk', val: 25, img: IMG.eosinofilo, bio: 'Secreta Proteína Básica Mayor.', mechanic: 'Daño: 25. Letal (x3) contra Helmintos.' },
+      { id: 'masto', name: 'Histamina (Mastocito)', category: 'cat-vasoactive', cost: 1, type: 'stun', img: IMG.mastocito, bio: 'Secreción masiva de histamina.', mechanic: 'Aturde al patógeno y abre lecho vascular.' },
+      { id: 'comp', name: 'Complemento', category: 'cat-soluble', cost: 1, type: 'buff', img: IMG.complemento, bio: 'Lisis y opsonización.', mechanic: 'Marca al patógeno: +50% de daño al próximo ataque.' },
+      { id: 'ifn', name: 'Interferón α/β', category: 'cat-soluble', cost: 1, type: 'shield', img: IMG.interferon, bio: 'Crea resistencia celular.', mechanic: 'Reduce el ataque enemigo a la mitad en su turno.' },
+      { id: 'dendro', name: 'C. Dendrítica', category: 'cat-cell', cost: 3, type: 'ultimate', img: IMG.dendritica, bio: 'Puente a la inmunidad adaptativa.', mechanic: 'Migra al ganglio. En 2 turnos, ataque Linfocitario Letal (-120 HP).' },
+      { id: 'langerhans', name: 'C. Langerhans', category: 'cat-cell', cost: 1, type: 'buff', img: IMG.dendritica, bio: 'Centinela epidérmico.', mechanic: 'Alerta tisular: Recupera +1 ATP inmediato.' },
+      { id: 'trm', name: 'T Residente', category: 'cat-cell', cost: 2, type: 'atk', val: 35, img: IMG.neutrofilo, bio: 'Vigilancia tisular periférica.', mechanic: 'Daño rápido de choque tisular: 35.' }
     ];
 
     let currentScen = null;
@@ -332,9 +364,9 @@
       const grid = document.getElementById('draft-grid');
       grid.innerHTML = '';
       CARDS.forEach(c => {
-        const el = document.createElement('div');
-        el.className = 'card-bio';
-        el.innerHTML = `<div class="c-img" style="background-image: url('${c.img}')"></div><div class="c-cost">${c.cost}</div><div class="c-info"><div class="c-name">${c.name}</div><div class="c-bio-desc">${c.bio}</div><div class="c-mechanic">${c.mechanic}</div></div>`;
+       const el = document.createElement('div');
+el.className = `card-bio ${c.category}`;
+el.innerHTML = `<div class="c-img" style="background-image: url('${c.img}')"></div><div class="c-cost">${c.cost}</div><div class="c-info"><div class="c-name">${c.name}</div><div class="c-bio-desc">${c.bio}</div><div class="c-mechanic">${c.mechanic}</div></div>`;
         el.onclick = () => toggleSelection(c, el);
         grid.appendChild(el);
       });
@@ -400,9 +432,9 @@
         let displayCost = c.cost;
         if (opsonized && (c.id === 'neutro' || c.id === 'macroM1' || c.id === 'macroM2')) displayCost = 0;
         
-        const isDisabled = turnState !== 'PLAYER' || atp < displayCost || (c.id === 'dendro' && adaptiveTimer > -1);
+       const isDisabled = turnState !== 'PLAYER' || atp < displayCost || (c.id === 'dendro' && adaptiveTimer > -1);
         const el = document.createElement('div');
-        el.className = `card-bio ${isDisabled ? 'disabled' : ''}`;
+        el.className = `card-bio ${c.category} ${isDisabled ? 'disabled' : ''}`;
         
         // Si cuesta 0 por sinergia, resaltamos el costo
         const costStyle = displayCost === 0 ? 'background: #a855f7; color: white; box-shadow: 0 0 10px #a855f7;' : '';
