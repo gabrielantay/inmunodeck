@@ -310,18 +310,72 @@
     };
 
     /* SCENARIOS: Aquí especificas el nombre del archivo de video (.mp4) a reproducir al ganar */
+    /* SCENARIOS: 5 Frentes Biológicos con sus firmas PAMPs y vías de susceptibilidad */
     const SCENARIOS = [
-      { id: 'piel', name: 'Epidermis', enemy: 'Bacteria Extracelular', type: 'bacteria', hp: 160, atk: 25, bg: IMG.bgPiel, avatar: IMG.pathoBact, 
-        vuln: 'Vulnerable a: Fagocitosis M1 y Complemento. Amenaza tisular alta.',
+      { 
+        id: 'piel', 
+        name: 'Epidermis (Corte Tisular)', 
+        enemy: 'Staphylococcus aureus', 
+        type: 'bacteria_gp', 
+        hp: 170, 
+        atk: 25, 
+        pamps: ['PGN', 'LTA'], // Peptidoglicano y Ácido Lipoteicoico (Gram+)
+        bg: IMG.bgPiel, 
+        avatar: IMG.pathoBact, 
+        vuln: 'PAMPs: [PGN] [LTA]. Vulnerable a: TLR2, Macrófagos M1 y Defensinas/AMPs. Alta inducción de DAMPs.',
         video: 'macrofago_patogeno.mp4' 
       },
-      { id: 'mucosa', name: 'Epitelio Respiratorio', enemy: 'Virus Intracelular', type: 'virus', hp: 120, atk: 35, bg: IMG.bgMucosa, avatar: IMG.pathoVirus,
-        vuln: 'Vulnerable a: Células NK e Interferón. Inmune a Neutrófilos y Complemento.',
-        video: 'video_macrofago_virus_celula_infectada.mp4'
+      { 
+        id: 'galt_bact', 
+        name: 'Mucosa Intestinal (Lumen)', 
+        enemy: 'E. coli Enteropatógena', 
+        type: 'bacteria_gn', 
+        hp: 200, 
+        atk: 20, 
+        pamps: ['LPS'], // Lipopolisacárido endotóxico (Gram-)
+        bg: IMG.bgGalt, 
+        avatar: IMG.pathoBact, 
+        vuln: 'PAMPs: [LPS]. Vulnerable a: TLR4, Opsonización C3b y lisis por MAC.',
+        video: 'macrofago_patogeno.mp4' 
       },
-      { id: 'galt', name: 'GALT Intestinal', enemy: 'E. coli Enteropatógena', type: 'bacteria', hp: 200, atk: 20, bg: IMG.bgGalt, avatar: IMG.pathoBact,
-        vuln: 'Vulnerable a: Opsonización y Macrófagos M1. Erosión de microvellosidades.',
-        video: 'video_helminto.mp4'
+      { 
+        id: 'galt_helm', 
+        name: 'Mucosa Intestinal (Invasión Helmíntica)', 
+        enemy: 'Helminto Parásito', 
+        type: 'helminto', 
+        hp: 240, 
+        atk: 22, 
+        pamps: ['GLICOPROTEINAS'], // Antígenos parasitarios
+        bg: IMG.bgGalt, 
+        avatar: IMG.pathoHelm, 
+        vuln: 'Inmune a fagocitosis estándar. Letal frente a Eosinófilos (Proteína Básica Mayor) e Histamina.',
+        video: 'video_helminto.mp4' 
+      },
+      { 
+        id: 'alveolo', 
+        name: 'Alvéolo Pulmonar', 
+        enemy: 'Virus ARN (Influenza / Corona)', 
+        type: 'virus', 
+        hp: 130, 
+        atk: 35, 
+        pamps: ['ARNbc', 'ARNmc'], // Patrones de replicación viral
+        bg: IMG.bgMucosa, 
+        avatar: IMG.pathoVirus, 
+        vuln: 'PAMPs: [ARNbc]. Vulnerable a: Células NK (Missing Self) y Escudo de Interferón Tipo I (IFN-α/β).',
+        video: 'video_macrofago_virus_celula_infectada.mp4' 
+      },
+      { 
+        id: 'bazo', 
+        name: 'Sinusoides Esplénicos (Sepsis)', 
+        enemy: 'Diseminación Sepsis Gram-', 
+        type: 'bacteria_gn', 
+        hp: 280, 
+        atk: 32, 
+        pamps: ['LPS'], 
+        bg: IMG.bgPiel, // O tu textura tisular disponible
+        avatar: IMG.pathoBact, 
+        vuln: 'Infección intravascular. Requiere lisis acelerada por Vía Alternativa/MAC y Linfocitos B1 (IgM).',
+        video: 'macrofago_patogeno.mp4' 
       }
     ];
 
@@ -354,24 +408,26 @@
       initApp();
     }
 
-    function initApp() {
+   function initApp() {
       currentScen = SCENARIOS[Math.floor(Math.random() * SCENARIOS.length)];
+      
+      const pampBadges = currentScen.pamps ? currentScen.pamps.map(p => `[${p}]`).join(' ') : '';
+      
       document.getElementById('draft-tissue-name').innerText = currentScen.name;
-      document.getElementById('draft-pathogen-name').innerText = `${currentScen.enemy} (${currentScen.type.toUpperCase()})`;
+      document.getElementById('draft-pathogen-name').innerText = `${currentScen.enemy} (${currentScen.type.toUpperCase()}) ${pampBadges}`;
       document.getElementById('draft-vulnerability').innerText = currentScen.vuln;
       document.getElementById('draft-pathogen-img').style.backgroundImage = `url('${currentScen.avatar}')`;
       
       const grid = document.getElementById('draft-grid');
       grid.innerHTML = '';
       CARDS.forEach(c => {
-       const el = document.createElement('div');
-el.className = `card-bio ${c.category}`;
-el.innerHTML = `<div class="c-img" style="background-image: url('${c.img}')"></div><div class="c-cost">${c.cost}</div><div class="c-info"><div class="c-name">${c.name}</div><div class="c-bio-desc">${c.bio}</div><div class="c-mechanic">${c.mechanic}</div></div>`;
+        const el = document.createElement('div');
+        el.className = `card-bio ${c.category}`;
+        el.innerHTML = `<div class="c-img" style="background-image: url('${c.img}')"></div><div class="c-cost">${c.cost}</div><div class="c-info"><div class="c-name">${c.name}</div><div class="c-bio-desc">${c.bio}</div><div class="c-mechanic">${c.mechanic}</div></div>`;
         el.onclick = () => toggleSelection(c, el);
         grid.appendChild(el);
       });
     }
-
     function toggleSelection(cardObj, element) {
       const idx = deck.indexOf(cardObj);
       if (idx > -1) { deck.splice(idx, 1); element.classList.remove('selected'); }
@@ -386,11 +442,12 @@ el.innerHTML = `<div class="c-img" style="background-image: url('${c.img}')"></d
       battleScreen.style.backgroundImage = `url('${currentScen.bg}')`;
       battleScreen.classList.add('active');
       document.getElementById('env-title').innerText = currentScen.name;
-      document.getElementById('enemy-name').innerText = currentScen.enemy;
       document.getElementById('enemy-avatar').style.backgroundImage = `url('${currentScen.avatar}')`;
       enemyHp = maxEnemyHp = currentScen.hp;
       dampsLevel = 0; // Inicializar DAMPs al entrar a combate
       updateBattleUI();
+      const pampBadges = currentScen.pamps ? currentScen.pamps.map(p => `[${p}]`).join(' ') : '';
+document.getElementById('enemy-name').innerText = `${currentScen.enemy} ${pampBadges}`;
     }
 
     function updateBattleUI() {
