@@ -607,11 +607,7 @@ document.getElementById('enemy-name').innerText = `${currentScen.enemy} ${pampBa
           spawnText(`-${dmg}`, '#ef4444', endX, endY);
           triggerShake(eAvatar);
         }
-          
-         enemyHp -= dmg;
-          spawnText(`-${dmg}`, '#ef4444', endX, endY);
-          triggerShake(eAvatar);
-        } 
+      
         else if (card.type === 'heal') {
           playerHp = Math.min(100, playerHp + card.val);
           dampsLevel = Math.max(0, dampsLevel - 1); // La reparación reduce DAMPs
