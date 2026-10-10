@@ -461,18 +461,17 @@ document.getElementById('enemy-name').innerText = `${currentScen.enemy} ${pampBa
       document.getElementById('enemy-hp-txt').innerText = `${Math.max(0, enemyHp)} / ${maxEnemyHp}`;
       document.getElementById('energy-val').innerText = atp;
       
-      // Control de marcadores de estado visuales
       document.getElementById('status-stun').style.display = stunned ? 'flex' : 'none';
       document.getElementById('status-opsonized').style.display = opsonized ? 'flex' : 'none';
-      // Control de visibilidad del botón de pasar turno según el ATP disponible
+
       const btnEndTurn = document.getElementById('btn-end-turn');
-      // Si el ATP es 0 o menor que el costo mínimo de la mano, hacemos que parpadee para guiar al usuario
       if (atp === 0) {
         btnEndTurn.classList.add('btn-pulse');
       } else {
         btnEndTurn.classList.remove('btn-pulse');
       }
-     const alertBox = document.getElementById('sys-alert');
+
+      const alertBox = document.getElementById('sys-alert');
       if (dampsLevel > 0) {
         alertBox.innerText = `⚠️ DAMPs Nivel ${dampsLevel} (Estrés Tisular)`;
         alertBox.style.opacity = 1;
@@ -489,30 +488,29 @@ document.getElementById('enemy-name').innerText = `${currentScen.enemy} ${pampBa
       const hand = document.getElementById('battle-hand');
       hand.innerHTML = '';
       deck.forEach(c => {
-        // Cálculo de costo dinámico por sinergia
         let displayCost = c.cost;
         if (opsonized && (c.id === 'neutro' || c.id === 'macroM1' || c.id === 'macroM2')) displayCost = 0;
         
-       const isDisabled = turnState !== 'PLAYER' || atp < displayCost || (c.id === 'dendro' && adaptiveTimer > -1);
-        const el = document.createElement('div');
-        el.className = `card-bio ${c.category} ${isDisabled ? 'disabled' : ''}`;
+        const isDisabled = turnState !== 'PLAYER' || atp < displayCost || (c.id === 'dendro' && adaptiveTimer > -1);
         
-        // Si cuesta 0 por sinergia, resaltamos el costo
+        // 1. Evaluar afinidad molecular de la carta 'c'
+        const affinity = evaluateAffinity(c, currentScen);
+        const matchClass = affinity.hasMatch ? 'card-match' : '';
+
+        // 2. Crear la carta con su categoría y su clase de match
+        const el = document.createElement('div');
+        el.className = `card-bio ${c.category} ${matchClass} ${isDisabled ? 'disabled' : ''}`;
+        
         const costStyle = displayCost === 0 ? 'background: #a855f7; color: white; box-shadow: 0 0 10px #a855f7;' : '';
         
         el.innerHTML = `<div class="c-img" style="background-image: url('${c.img}')"></div><div class="c-cost" style="${costStyle}">${displayCost}</div><div class="c-info"><div class="c-name">${c.name}</div><div class="c-mechanic">${c.mechanic}</div></div>`;
         
-        // Pasamos e.currentTarget para obtener las coordenadas físicas de la carta tocada
         el.onclick = (e) => executePlayerAction(c, e.currentTarget);
         hand.appendChild(el);
       });
-      const affinity = evaluateAffinity(c, currentScen);
-        const matchClass = affinity.hasMatch ? 'card-match' : '';
-
-        const el = document.createElement('div');
-        el.className = `card-bio ${c.category} ${matchClass} ${isDisabled ? 'disabled' : ''}`;
     }
-const MOLECULAR_RULES = {
+
+    const MOLECULAR_RULES = {
       'TLR4': ['LPS'],
       'TLR2': ['PGN', 'LTA'],
       'ARNbc': ['ARNbc'],
