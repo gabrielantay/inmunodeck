@@ -41,16 +41,16 @@
     .card-bio:active:not(.disabled) { transform: scale(0.95); }
     
     .c-img { 
-  height: 310px; /* Recuperamos 60 píxeles de altura para que se vea la parte inferior de tu dibujo */
-  background-size: 138%; /* Aumentamos el zoom para expulsar los cuadros blancos fuera de los bordes */
-  background-position: center 2%; /* Alineamos desde arriba para no cortar el título de tu dibujo */
-  background-repeat: no-repeat;
-  border-bottom: 3px solid #1e293b; 
-  position: relative; 
-  background-color: #0f172a; 
-  overflow: hidden; 
-}
-    .c-cost { position: absolute; top: 4px; right: 4px; background: var(--energy); color: #000; width: 26px; height: 26px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: 900; font-size: 15px; border: 2px solid #000; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+      height: 310px;
+      background-size: 138%;
+      background-position: center 2%;
+      background-repeat: no-repeat;
+      border-bottom: 3px solid #1e293b; 
+      position: relative; 
+      background-color: #0f172a; 
+      overflow: hidden; 
+    }
+    .c-cost { position: absolute; top: 4px; right: 4px; background: var(--energy); color: #000; width: 26px; height: 26px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: 900; font-size: 15px; border: 2px solid #000; box-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 10; }
     .c-info { background: #0f172a; padding: 6px; flex: 1; display: flex; flex-direction: column; }
     .c-name { font-size: 13px; font-weight: 900; text-transform: uppercase; color: #f8fafc; margin-bottom: 2px; text-align: center; }
     .c-bio-desc { font-size: 9px; color: #94a3b8; line-height: 1.2; margin-bottom: 4px; font-style: italic; text-align: center; }
@@ -78,16 +78,16 @@
 
     .arena { flex: 1 1 auto; display: flex; justify-content: center; align-items: center; position: relative; }
     .enemy-avatar { 
-  width: 260px; /* Aumentado para aprovechar que ya no hay marco */
-  height: 260px; 
-  background-size: contain; /* Muestra el villano completo sin recortes */
-  background-position: center; 
-  background-repeat: no-repeat;
-  background-color: transparent; /* Asegura que no haya fondo */
-  animation: breathe 3.5s ease-in-out infinite; /* Mantiene la animación de respiración */
-  position: relative; 
-  filter: drop-shadow(0 0 25px rgba(239, 68, 68, 0.8)); /* El brillo ahora sigue la silueta del villano */
-}
+      width: 260px;
+      height: 260px; 
+      background-size: contain;
+      background-position: center; 
+      background-repeat: no-repeat;
+      background-color: transparent;
+      animation: breathe 3.5s ease-in-out infinite;
+      position: relative; 
+      filter: drop-shadow(0 0 25px rgba(239, 68, 68, 0.8));
+    }
     .status-icon { position: absolute; top: -15px; right: -15px; background: #000; border: 2px solid #fff; border-radius: 50%; width: 40px; height: 40px; display: none; justify-content: center; align-items: center; font-size: 20px; box-shadow: 0 0 10px #fff; }
     
     .hud-bottom { flex: 0 0 auto; background: rgba(0,0,0,0.85); padding: 10px 15px max(10px, env(safe-area-inset-bottom)); border-top: 2px solid var(--border); }
@@ -106,7 +106,6 @@
     .alert-box { display: inline-block; background: rgba(168, 85, 247, 0.9); border: 2px solid #d8b4fe; padding: 8px 16px; border-radius: 20px; font-weight: 900; font-size: 12px; text-transform: uppercase; box-shadow: 0 4px 10px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s; }
 
     /* ANIMACIONES */
-        /* ANIMACIONES */
     .toxin-projectile {
       position: absolute;
       width: 18px; 
@@ -118,9 +117,6 @@
       pointer-events: none;
       transition: transform 0.3s cubic-bezier(0.5, 0, 0.8, 1);
     }
-
-    @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
-    .turn-announcer { position: absolute; top: 40%; left: -100vw; width: 100vw; background: rgba(220, 38, 38, 0.95); padding: 25px 0; text-align: center; font-size: 32px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); z-index: 100; text-shadow: 2px 2px 0 #000; transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
     @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
     .turn-announcer { position: absolute; top: 40%; left: -100vw; width: 100vw; background: rgba(220, 38, 38, 0.95); padding: 25px 0; text-align: center; font-size: 32px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); z-index: 100; text-shadow: 2px 2px 0 #000; transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -155,7 +151,7 @@
       left: -10px;
       background: #a855f7; 
       border: 2px solid #fff; 
-      border-radius: 50%;
+      border-radius: 50%; 
       width: 40px; 
       height: 40px; 
       display: none; 
@@ -173,42 +169,21 @@
       animation: pulseGlow 1.2s infinite ease-in-out;
       background: #2563eb !important;
     }
-    /* SISTEMA DE COLOR POR TAXONOMÍA BIOLÓGICA */
-    .card-bio.cat-cell {
-      border-color: #38bdf8;
-    }
-    .card-bio.cat-cell.selected {
-      border-color: #38bdf8;
-      box-shadow: 0 0 16px rgba(56, 189, 248, 0.8);
-    }
 
-    .card-bio.cat-soluble {
-      border-color: #10b981;
-    }
-    .card-bio.cat-soluble.selected {
-      border-color: #10b981;
-      box-shadow: 0 0 16px rgba(16, 185, 129, 0.8);
-    }
-
-    .card-bio.cat-signaling {
-      border-color: #f59e0b;
-    }
-    .card-bio.cat-signaling.selected {
-      border-color: #f59e0b;
-      box-shadow: 0 0 16px rgba(245, 158, 11, 0.8);
-    }
-
-    .card-bio.cat-vasoactive {
-      border-color: #f97316;
-    }
-    .card-bio.cat-vasoactive.selected {
-      border-color: #f97316;
-      box-shadow: 0 0 16px rgba(249, 115, 22, 0.8);
-    }
+    /* TAXONOMÍA BIOLÓGICA */
+    .card-bio.cat-cell { border-color: #38bdf8; }
+    .card-bio.cat-cell.selected { border-color: #38bdf8; box-shadow: 0 0 16px rgba(56, 189, 248, 0.8); }
+    .card-bio.cat-soluble { border-color: #10b981; }
+    .card-bio.cat-soluble.selected { border-color: #10b981; box-shadow: 0 0 16px rgba(16, 185, 129, 0.8); }
+    .card-bio.cat-signaling { border-color: #f59e0b; }
+    .card-bio.cat-signaling.selected { border-color: #f59e0b; box-shadow: 0 0 16px rgba(245, 158, 11, 0.8); }
+    .card-bio.cat-vasoactive { border-color: #f97316; }
+    .card-bio.cat-vasoactive.selected { border-color: #f97316; box-shadow: 0 0 16px rgba(249, 115, 22, 0.8); }
     .card-match {
       box-shadow: 0 0 15px #38bdf8, inset 0 0 8px #38bdf8 !important;
       border-color: #38bdf8 !important;
     }
+
     /* CHIPS EXPLÍCITOS DE RECEPTORES (PRR / TLR) */
     .prr-container {
       position: absolute;
@@ -297,7 +272,7 @@
 <body>
 
   <div id="app-container"> 
-        <div id="intro-screen" class="screen active" style="z-index: 10; background: var(--bg-dark); padding: 30px; justify-content: center; align-items: center; text-align: center;">
+    <div id="intro-screen" class="screen active" style="z-index: 10; background: var(--bg-dark); padding: 30px; justify-content: center; align-items: center; text-align: center;">
       <h1 style="color: var(--accent); font-size: 32px; font-weight: 900; margin-bottom: 20px; text-transform: uppercase;">InmunoDeck</h1>
       <div style="background: rgba(15, 23, 42, 0.9); border: 2px solid var(--border); padding: 20px; border-radius: 10px; font-size: 16px; color: #cbd5e1; line-height: 1.6; max-width: 500px; text-align: left; margin-bottom: 30px;">
         <p><strong>Misión:</strong> Erradicar la amenaza patógena antes de que la integridad tisular (Hospedero) llegue a cero.</p><br>
@@ -306,8 +281,9 @@
       </div>
       <button class="btn-main" style="max-width: 300px;" onclick="closeIntro()">INICIAR SIMULACIÓN</button>
     </div>
-  <div id="draft-screen" class="screen">
-            <div class="draft-header">
+
+    <div id="draft-screen" class="screen">
+      <div class="draft-header">
         <div class="draft-title" id="draft-tissue-name">ANALIZANDO TEJIDO...</div>
         <div class="pathogen-intel" style="display: flex; align-items: center; gap: 15px; text-align: left;">
           <div id="draft-pathogen-img" style="width: 70px; height: 70px; background-size: contain; background-position: center; background-repeat: no-repeat; flex-shrink: 0; filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.8));"></div>
@@ -329,6 +305,7 @@
 
     <div id="battle-screen" class="screen">
       <div id="battle-overlay"></div>
+      
       <!-- OVERLAY DE RECONOCIMIENTO MOLECULAR -->
       <div id="docking-overlay" class="molecular-docking-overlay">
         <div id="docking-video-container" style="display: none; max-width: 320px; border-radius: 10px; overflow: hidden; margin-bottom: 15px; border: 2px solid var(--accent);"></div>
@@ -339,8 +316,8 @@
         </div>
         <div class="docking-desc" id="dock-text">¡Reconocimiento de Patrón Molecular!</div>
       </div>
+
       <div class="battle-ui">
-        
         <div class="hud-top">
           <div class="env-title-battle" id="env-title">Epidermis</div>
           <div class="system-alert"><div class="alert-box" id="sys-alert">Célula Dendrítica Migrando...</div></div>
@@ -378,10 +355,7 @@
     <div id="end-modal" class="modal-overlay">
       <div id="end-title" class="modal-title"></div>
       <div id="end-desc" class="modal-desc"></div>
-      
-      <!-- CONTENEDOR DE VIDEO DINÁMICO -->
       <div id="end-video-container" style="margin-bottom: 25px; border-radius: 8px; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.8); max-width: 90%; width: 400px;"></div>
-      
       <button class="btn-turn" style="padding: 15px 30px; font-size: 18px; box-shadow: 0 6px 0 #1d4ed8;" onclick="location.reload()">NUEVA INFECCIÓN</button>
     </div>
   </div>
@@ -398,7 +372,6 @@
       pathoBact: 'bacteria.png',
       pathoVirus: 'virus.gif',
       pathoHelm: 'helminto.PNG',
-      
       eosinofilo: 'eosinofilo.jpg',
       complemento: 'complemento.jpg.jpg',
       interferon: 'interferon.jpg',
@@ -406,8 +379,6 @@
       mastocito: 'mastocito.jpg'
     };
 
-    /* SCENARIOS: Aquí especificas el nombre del archivo de video (.mp4) a reproducir al ganar */
-    /* SCENARIOS: 5 Frentes Biológicos con sus firmas PAMPs y vías de susceptibilidad */
     const SCENARIOS = [
       { 
         id: 'piel', 
@@ -416,7 +387,7 @@
         type: 'bacteria_gp', 
         hp: 170, 
         atk: 25, 
-        pamps: ['PGN', 'LTA'], // Peptidoglicano y Ácido Lipoteicoico (Gram+)
+        pamps: ['PGN', 'LTA'],
         bg: IMG.bgPiel, 
         avatar: IMG.pathoBact, 
         vuln: 'PAMPs: [PGN] [LTA]. Vulnerable a: TLR2, Macrófagos M1 y Defensinas/AMPs. Alta inducción de DAMPs.',
@@ -429,7 +400,7 @@
         type: 'bacteria_gn', 
         hp: 200, 
         atk: 20, 
-        pamps: ['LPS'], // Lipopolisacárido endotóxico (Gram-)
+        pamps: ['LPS'],
         bg: IMG.bgGalt, 
         avatar: IMG.pathoBact, 
         vuln: 'PAMPs: [LPS]. Vulnerable a: TLR4, Opsonización C3b y lisis por MAC.',
@@ -442,7 +413,7 @@
         type: 'helminto', 
         hp: 240, 
         atk: 22, 
-        pamps: ['GLICOPROTEINAS'], // Antígenos parasitarios
+        pamps: ['GLICOPROTEINAS'],
         bg: IMG.bgGalt, 
         avatar: IMG.pathoHelm, 
         vuln: 'Inmune a fagocitosis estándar. Letal frente a Eosinófilos (Proteína Básica Mayor) e Histamina.',
@@ -455,7 +426,7 @@
         type: 'virus', 
         hp: 130, 
         atk: 35, 
-        pamps: ['ARNbc', 'ARNmc'], // Patrones de replicación viral
+        pamps: ['ARNbc', 'ARNmc'],
         bg: IMG.bgMucosa, 
         avatar: IMG.pathoVirus, 
         vuln: 'PAMPs: [ARNbc]. Vulnerable a: Células NK (Missing Self) y Escudo de Interferón Tipo I (IFN-α/β).',
@@ -469,14 +440,14 @@
         hp: 280, 
         atk: 32, 
         pamps: ['LPS'], 
-        bg: IMG.bgPiel, // O tu textura tisular disponible
+        bg: IMG.bgPiel,
         avatar: IMG.pathoBact, 
         vuln: 'Infección intravascular. Requiere lisis acelerada por Vía Alternativa/MAC y Linfocitos B1 (IgM).',
         video: 'macrofago_patogeno.mp4' 
       }
     ];
 
-   const CARDS = [
+    const CARDS = [
       { id: 'neutro', name: 'Neutrófilo', category: 'cat-cell', cost: 1, type: 'atk', val: 30, prrs: ['TLR2', 'TLR4'], img: IMG.neutrofilo, bio: 'Fagocito rápido.', mechanic: 'Daño: 30. Afinidad: PGN y LPS.' },
       { id: 'macroM1', name: 'Macrófago M1', category: 'cat-cell', cost: 2, type: 'atk', val: 50, prrs: ['TLR4', 'TLR2', 'NLRP3'], img: IMG.macrofago1, bio: 'Estallido respiratorio lítico.', mechanic: 'Daño: 50. Crítico con TLR4/LPS y buff por DAMPs.' },
       { id: 'macroM2', name: 'Macrófago M2', category: 'cat-cell', cost: 2, type: 'heal', val: 40, prrs: ['CD206'], img: IMG.macrofago2, bio: 'Regenerador tisular y angiogénesis.', mechanic: 'Repara +40 HP y remueve DAMPs del tejido.' },
@@ -505,7 +476,7 @@
       initApp();
     }
 
-   function initApp() {
+    function initApp() {
       currentScen = SCENARIOS[Math.floor(Math.random() * SCENARIOS.length)];
       
       const pampBadges = currentScen.pamps ? currentScen.pamps.map(p => `[${p}]`).join(' ') : '';
@@ -515,7 +486,7 @@
       document.getElementById('draft-vulnerability').innerText = currentScen.vuln;
       document.getElementById('draft-pathogen-img').style.backgroundImage = `url('${currentScen.avatar}')`;
       
-     const grid = document.getElementById('draft-grid');
+      const grid = document.getElementById('draft-grid');
       grid.innerHTML = '';
       CARDS.forEach(c => {
         const prrBadges = (c.prrs && c.prrs.length > 0)
@@ -536,6 +507,8 @@
         el.onclick = () => toggleSelection(c, el);
         grid.appendChild(el);
       });
+    }
+
     function toggleSelection(cardObj, element) {
       const idx = deck.indexOf(cardObj);
       if (idx > -1) { deck.splice(idx, 1); element.classList.remove('selected'); }
@@ -552,10 +525,10 @@
       document.getElementById('env-title').innerText = currentScen.name;
       document.getElementById('enemy-avatar').style.backgroundImage = `url('${currentScen.avatar}')`;
       enemyHp = maxEnemyHp = currentScen.hp;
-      dampsLevel = 0; // Inicializar DAMPs al entrar a combate
+      dampsLevel = 0;
       updateBattleUI();
       const pampBadges = currentScen.pamps ? currentScen.pamps.map(p => `[${p}]`).join(' ') : '';
-document.getElementById('enemy-name').innerText = `${currentScen.enemy} ${pampBadges}`;
+      document.getElementById('enemy-name').innerText = `${currentScen.enemy} ${pampBadges}`;
     }
 
     function updateBattleUI() {
@@ -621,6 +594,7 @@ document.getElementById('enemy-name').innerText = `${currentScen.enemy} ${pampBa
         el.onclick = (e) => executePlayerAction(c, e.currentTarget);
         hand.appendChild(el);
       });
+    }
 
     const MOLECULAR_RULES = {
       'TLR4': ['LPS'],
@@ -640,6 +614,7 @@ document.getElementById('enemy-name').innerText = `${currentScen.enemy} ${pampBa
       }
       return { hasMatch: false, receptor: null, ligand: null };
     }
+
     function playMolecularDocking(receptor, ligand, videoPath, callback) {
       const overlay = document.getElementById('docking-overlay');
       const vContainer = document.getElementById('docking-video-container');
@@ -665,8 +640,8 @@ document.getElementById('enemy-name').innerText = `${currentScen.enemy} ${pampBa
         if (callback) callback();
       }, 1400);
     }
+
     function executePlayerAction(card, cardElement) {
-      // 1. Verificación de Sinergia y Economía
       let cost = card.cost;
       let isSynergy = false;
       if (opsonized && (card.id === 'neutro' || card.id === 'macroM1' || card.id === 'macroM2')) {
@@ -678,7 +653,6 @@ document.getElementById('enemy-name').innerText = `${currentScen.enemy} ${pampBa
       
       atp -= cost;
       
-      // 2. Extraer coordenadas topográficas
       const cardRect = cardElement.getBoundingClientRect();
       const eAvatar = document.getElementById('enemy-avatar');
       const eRect = eAvatar.getBoundingClientRect();
@@ -688,7 +662,6 @@ document.getElementById('enemy-name').innerText = `${currentScen.enemy} ${pampBa
       const endX = eRect.left + eRect.width / 2;
       const endY = eRect.top + eRect.height / 2;
 
-      // 3. Crear clon balístico y posicionarlo sobre la mano
       const proj = document.createElement('div');
       proj.className = 'projectile-player';
       proj.style.backgroundImage = `url('${card.img}')`;
@@ -696,17 +669,14 @@ document.getElementById('enemy-name').innerText = `${currentScen.enemy} ${pampBa
       proj.style.top = `${startY - 27.5}px`;
       document.body.appendChild(proj);
 
-      // Forzar renderizado para activar la transición CSS
       void proj.offsetWidth; 
 
-      // Lanzar proyectil hacia el patógeno
       proj.style.transform = `translate(${endX - startX}px, ${endY - startY}px) scale(1.3) rotate(360deg)`;
 
-      // 4. Resolver impacto asíncrono
       setTimeout(() => {
-        proj.remove(); // Destruir el proyectil
+        proj.remove();
 
- if (card.type === 'atk') {
+        if (card.type === 'atk') {
           let dmg = card.val;
           const affinity = evaluateAffinity(card, currentScen);
 
@@ -751,13 +721,15 @@ document.getElementById('enemy-name').innerText = `${currentScen.enemy} ${pampBa
           }
           return;
         }
-      
         else if (card.type === 'heal') {
           playerHp = Math.min(100, playerHp + card.val);
-          dampsLevel = Math.max(0, dampsLevel - 1); // La reparación reduce DAMPs
+          dampsLevel = Math.max(0, dampsLevel - 1);
           spawnText(`+${card.val}`, '#22c55e', endX, endY + 40);
         }
-        else if (card.type === 'stun') { stunned = true; spawnText("ATURDIDO", '#eab308', endX, endY); }
+        else if (card.type === 'stun') { 
+          stunned = true; 
+          spawnText("ATURDIDO", '#eab308', endX, endY); 
+        }
         else if (card.type === 'buff') { 
           if(card.id === 'langerhans') { 
             atp = Math.min(maxAtp, atp + 1); 
@@ -767,19 +739,25 @@ document.getElementById('enemy-name').innerText = `${currentScen.enemy} ${pampBa
             spawnText("OPSONIZADO", '#a855f7', endX, endY); 
           }
         }
-        else if (card.type === 'shield') { shielded = true; spawnText("ESCUDO IFN", '#38bdf8', endX, endY); }
-        else if (card.type === 'ultimate') { adaptiveTimer = 2; spawnText("APC MIGRANDO", '#d8b4fe', endX, endY); }
+        else if (card.type === 'shield') { 
+          shielded = true; 
+          spawnText("ESCUDO IFN", '#38bdf8', endX, endY); 
+        }
+        else if (card.type === 'ultimate') { 
+          adaptiveTimer = 2; 
+          spawnText("APC MIGRANDO", '#d8b4fe', endX, endY); 
+        }
 
-        updateBattleUI(); // Sincronizar HUD y marcadores tras el impacto
+        updateBattleUI();
         checkVictory();
-      }, 400); // 400ms = Duración exacta de la transición de vuelo
+      }, 400);
     }
 
     function checkVictory() {
       if (enemyHp <= 0) endGame('VICTORIA INMUNOLÓGICA', 'El tejido ha sido asegurado.', '#22c55e');
     }
 
-        function startEnemyTurn() {
+    function startEnemyTurn() {
       if (turnState !== 'PLAYER' || enemyHp <= 0) return;
       turnState = 'ENEMY';
       updateBattleUI();
@@ -802,11 +780,8 @@ document.getElementById('enemy-name').innerText = `${currentScen.enemy} ${pampBa
       setTimeout(() => {
         ann.classList.remove('show');
         const avatar = document.getElementById('enemy-avatar');
-        
-        // Efecto de rotación e impulso del patógeno
         avatar.style.transform = "scale(1.3) translateY(30px) rotate(-15deg)";
         
-        // Lógica de daño y disparo de toxina
         setTimeout(() => {
           let eDmg = currentScen.atk;
           if (shielded) { eDmg = Math.floor(eDmg / 2); shielded = false; }
@@ -829,7 +804,7 @@ document.getElementById('enemy-name').innerText = `${currentScen.enemy} ${pampBa
           setTimeout(() => proj.remove(), 300);
 
           playerHp -= eDmg;
-          dampsLevel++; // El daño tisular libera DAMPs (Estrés celular)
+          dampsLevel++;
           spawnText(`-${eDmg}`, '#ef4444', pRect.left + pRect.width/2, pRect.top - 20);
           
           document.body.classList.add('damage-flash');
@@ -843,7 +818,6 @@ document.getElementById('enemy-name').innerText = `${currentScen.enemy} ${pampBa
         }, 300);
       }, 1200);
     }
-
 
     function resetPlayerTurn() {
       if (turnState === 'GAMEOVER') return;
@@ -891,8 +865,6 @@ document.getElementById('enemy-name').innerText = `${currentScen.enemy} ${pampBa
         
         videoContainer.innerHTML = '';
         
-        // Inyecta el video solo si el escenario lo tiene y es una victoria
-        // Inyecta el video solo si el escenario lo tiene y es una victoria
         if (currentScen.video && currentScen.video !== '' && color === '#22c55e') {
           videoContainer.innerHTML = `
             <video autoplay loop controls playsinline style="height: 45vh; max-width: 100%; object-fit: contain; border-radius: 8px; background: #000;">
