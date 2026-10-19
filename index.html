@@ -1,948 +1,571 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>InmunoDeck: Defensa Innata y Puente Adaptativo</title>
-  <!-- LIBRERÍA GSAP PARA MICRO-CINEMÁTICAS MOLECULARES -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <style>
-    :root {
-      --bg-dark: #050b14;
-      --accent: #38bdf8;
-      --danger: #ef4444;
-      --success: #22c55e;
-      --energy: #fbbf24;
-      --panel: rgba(15, 23, 42, 0.9);
-      --border: #334155;
-    }
-    
-    * { box-sizing: border-box; touch-action: manipulation; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    
-    body { background-color: #000; color: white; height: 100dvh; width: 100vw; overflow: hidden; user-select: none; }
-    #app-container { position: relative; width: 100%; height: 100%; background: var(--bg-dark); }
-
-    .screen { position: absolute; inset: 0; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 0.8s ease-in-out; background-size: cover; background-position: center; }
-    .screen.active { opacity: 1; pointer-events: auto; }
-
-    /* DRAFT */
-    #draft-screen { background: linear-gradient(135deg, #091325 0%, #1e293b 100%); }
-    .draft-header { flex: 0 0 auto; padding: 15px 20px; text-align: center; background: rgba(0, 0, 0, 0.6); border-bottom: 3px solid var(--danger); }
-    .draft-title { font-size: 26px; font-weight: 900; color: var(--accent); text-transform: uppercase; margin-bottom: 5px; }
-    .pathogen-intel { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); border-radius: 8px; padding: 10px; margin-top: 5px; }
-    .pathogen-name { font-size: 18px; font-weight: 900; color: var(--danger); text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .pathogen-vuln { font-size: 13px; color: #cbd5e1; margin-top: 5px; line-height: 1.4; font-weight: 500; }
-    
-    .draft-body { flex: 1 1 auto; overflow-y: auto; padding: 15px; }
-    .draft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 18px; padding-bottom: 25px; }
-    .draft-footer { flex: 0 0 auto; padding: 15px 20px max(20px, env(safe-area-inset-bottom)); background: rgba(15, 23, 42, 0.95); border-top: 2px solid var(--border); }
-
-    .card-bio { background: #1e293b; border: 3px solid #334155; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; position: relative; cursor: pointer; transition: transform 0.2s, border-color 0.2s; }
-    .card-bio.selected { border-color: var(--success); box-shadow: 0 0 15px rgba(34, 197, 94, 0.6); transform: translateY(-4px); }
-    .card-bio.disabled { filter: grayscale(1) brightness(0.5); pointer-events: none; }
-    .card-bio:active:not(.disabled) { transform: scale(0.95); }
-    
-    .c-img { 
-      height: 310px;
-      background-size: 138%;
-      background-position: center 2%;
-      background-repeat: no-repeat;
-      border-bottom: 3px solid #1e293b; 
-      position: relative; 
-      background-color: #0f172a; 
-      overflow: hidden; 
-    }
-    .c-cost { position: absolute; top: 4px; right: 4px; background: var(--energy); color: #000; width: 26px; height: 26px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: 900; font-size: 15px; border: 2px solid #000; box-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 10; }
-    .c-info { background: #0f172a; padding: 6px; flex: 1; display: flex; flex-direction: column; }
-    .c-name { font-size: 13px; font-weight: 900; text-transform: uppercase; color: #f8fafc; margin-bottom: 2px; text-align: center; }
-    .c-bio-desc { font-size: 9px; color: #94a3b8; line-height: 1.2; margin-bottom: 4px; font-style: italic; text-align: center; }
-    .c-mechanic { font-size: 10px; color: var(--accent); font-weight: 700; line-height: 1.1; text-align: center; background: rgba(56, 189, 248, 0.1); padding: 4px; border-radius: 4px; margin-top: auto; }
-
-    .btn-main { width: 100%; background: var(--success); color: white; border: none; padding: 16px; border-radius: 12px; font-weight: 900; font-size: 18px; text-transform: uppercase; box-shadow: 0 6px 0 #166534; }
-    .btn-main:active { transform: translateY(4px); box-shadow: none; }
-    .btn-main:disabled { background: #475569; opacity: 0.5; box-shadow: 0 6px 0 #1e293b; }
-
-    /* COMBATE */
-    #battle-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.85) 100%); z-index: 1; }
-    .battle-ui { position: relative; z-index: 2; display: flex; flex-direction: column; height: 100%; }
-    
-    .hud-top { flex: 0 0 auto; padding: 15px max(15px, env(safe-area-inset-left)); }
-    .env-title-battle { font-size: 28px; font-weight: 900; text-align: center; color: var(--accent); text-shadow: 2px 2px 4px #000; text-transform: uppercase; margin-bottom: 10px; }
-    
-    .bars-container { display: flex; justify-content: space-between; gap: 10px; }
-    .bar-wrapper { flex: 1; background: rgba(0,0,0,0.8); padding: 8px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.5); }
-    .bar-label { font-size: 12px; font-weight: 900; text-transform: uppercase; margin-bottom: 4px; }
-    .bar-bg { background: #1e293b; height: 24px; border-radius: 12px; overflow: hidden; position: relative; border: 2px solid #000; }
-    .bar-fill { height: 100%; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-    #player-bar { background: linear-gradient(90deg, #16a34a, #22c55e); }
-    #enemy-bar { background: linear-gradient(90deg, #dc2626, #ef4444); }
-    .bar-text { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; font-size: 14px; font-weight: 900; text-shadow: 1px 1px 2px #000; }
-
-    .arena { flex: 1 1 auto; display: flex; justify-content: center; align-items: center; position: relative; }
-    .enemy-avatar { 
-      width: 260px;
-      height: 260px; 
-      background-size: contain;
-      background-position: center; 
-      background-repeat: no-repeat;
-      background-color: transparent;
-      animation: breathe 3.5s ease-in-out infinite;
-      position: relative; 
-      filter: drop-shadow(0 0 25px rgba(239, 68, 68, 0.8));
-    }
-    .status-icon { position: absolute; top: -15px; right: -15px; background: #000; border: 2px solid #fff; border-radius: 50%; width: 40px; height: 40px; display: none; justify-content: center; align-items: center; font-size: 20px; box-shadow: 0 0 10px #fff; }
-    
-    .hud-bottom { flex: 0 0 auto; background: rgba(0,0,0,0.85); padding: 10px 15px max(10px, env(safe-area-inset-bottom)); border-top: 2px solid var(--border); }
-    .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .energy-display { font-size: 22px; font-weight: 900; color: var(--energy); display: flex; align-items: center; gap: 8px; text-shadow: 1px 1px 2px #000; }
-    .btn-turn { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 900; font-size: 15px; text-transform: uppercase; box-shadow: 0 4px 0 #1d4ed8; }
-    .btn-turn:active { transform: translateY(4px); box-shadow: none; }
-    
-    .hand-container { display: flex; gap: 8px; justify-content: flex-start; overflow-x: auto; padding-bottom: 5px; }
-    .hand-container .card-bio { width: 180px; flex-shrink: 0; }
-    .hand-container .c-img { height: 260px; background-size: 138%; background-position: center 2%; }
-    .hand-container .c-bio-desc { display: none; }
-    .hand-container .c-mechanic { font-size: 9px; padding: 2px; }
-
-    .system-alert { position: absolute; top: 120px; left: 0; right: 0; text-align: center; z-index: 50; pointer-events: none; }
-    .alert-box { display: inline-block; background: rgba(168, 85, 247, 0.9); border: 2px solid #d8b4fe; padding: 8px 16px; border-radius: 20px; font-weight: 900; font-size: 12px; text-transform: uppercase; box-shadow: 0 4px 10px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s; }
-
-    /* ANIMACIONES */
-    .toxin-projectile {
-      position: absolute;
-      width: 18px; 
-      height: 18px;
-      background: var(--danger);
-      border-radius: 50%;
-      box-shadow: 0 0 15px var(--danger), inset 0 0 5px #fff;
-      z-index: 100;
-      pointer-events: none;
-      transition: transform 0.3s cubic-bezier(0.5, 0, 0.8, 1);
-    }
-
-    @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
-    .turn-announcer { position: absolute; top: 40%; left: -100vw; width: 100vw; background: rgba(220, 38, 38, 0.95); padding: 25px 0; text-align: center; font-size: 32px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); z-index: 100; text-shadow: 2px 2px 0 #000; transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-    .turn-announcer.show { transform: translateX(0); }
-    .turn-announcer.hide { transform: translateX(100vw); }
-    .fct { position: absolute; z-index: 50; font-size: 45px; font-weight: 900; text-shadow: 3px 3px 0 #000, -2px -2px 0 #000; pointer-events: none; animation: floatUp 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-    @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(0.5); } 20% { transform: translateY(-50px) scale(1.3); } 100% { opacity: 0; transform: translateY(-120px) scale(1); } }
-    .shake { animation: shakeAnim 0.4s cubic-bezier(.36,.07,.19,.97) both; }
-    @keyframes shakeAnim { 10%, 90% { transform: translate3d(-6px, 0, 0); } 20%, 80% { transform: translate3d(12px, 0, 0); filter: brightness(2) saturate(3); } 30%, 50%, 70% { transform: translate3d(-15px, 0, 0); } 40%, 60% { transform: translate3d(15px, 0, 0); } }
-    .damage-flash { animation: screenFlash 0.5s ease-out forwards; }
-    @keyframes screenFlash { 0% { box-shadow: inset 0 0 0 0 transparent; } 50% { box-shadow: inset 0 0 150px 60px rgba(239,68,68,0.9); } 100% { box-shadow: inset 0 0 0 0 transparent; } }
-    .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.95); z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; padding: 20px; }
-    .modal-overlay.active { opacity: 1; pointer-events: auto; }
-    .modal-title { font-size: 38px; font-weight: 900; text-transform: uppercase; margin-bottom: 15px; text-shadow: 0 0 25px currentColor; text-align: center; line-height: 1.1; }
-    .modal-desc { font-size: 16px; color: #e2e8f0; text-align: center; max-width: 90%; line-height: 1.5; margin-bottom: 25px; }
-    .projectile-player {
-      position: absolute;
-      width: 55px; 
-      height: 55px;
-      border-radius: 50%;
-      background-size: cover;
-      background-position: center;
-      box-shadow: 0 0 20px var(--accent), inset 0 0 10px #000;
-      z-index: 300;
-      pointer-events: none;
-      transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-    }
-    
-    .status-opsonized {
-      position: absolute; 
-      top: 20px; 
-      left: -10px;
-      background: #a855f7; 
-      border: 2px solid #fff; 
-      border-radius: 50%; 
-      width: 40px; 
-      height: 40px; 
-      display: none; 
-      justify-content: center; 
-      align-items: center; 
-      font-size: 20px; 
-      box-shadow: 0 0 15px #a855f7;
-    }
-    @keyframes pulseGlow {
-      0% { transform: scale(1); box-shadow: 0 4px 0 #1d4ed8, 0 0 0 rgba(59, 130, 246, 0); }
-      50% { transform: scale(1.05); box-shadow: 0 4px 0 #1d4ed8, 0 0 20px rgba(59, 130, 246, 1); filter: brightness(1.2); }
-      100% { transform: scale(1); box-shadow: 0 4px 0 #1d4ed8, 0 0 0 rgba(59, 130, 246, 0); }
-    }
-    .btn-pulse {
-      animation: pulseGlow 1.2s infinite ease-in-out;
-      background: #2563eb !important;
-    }
-
-    /* TAXONOMÍA BIOLÓGICA */
-    .card-bio.cat-cell { border-color: #38bdf8; }
-    .card-bio.cat-cell.selected { border-color: #38bdf8; box-shadow: 0 0 16px rgba(56, 189, 248, 0.8); }
-    .card-bio.cat-soluble { border-color: #10b981; }
-    .card-bio.cat-soluble.selected { border-color: #10b981; box-shadow: 0 0 16px rgba(16, 185, 129, 0.8); }
-    .card-bio.cat-signaling { border-color: #f59e0b; }
-    .card-bio.cat-signaling.selected { border-color: #f59e0b; box-shadow: 0 0 16px rgba(245, 158, 11, 0.8); }
-    .card-bio.cat-vasoactive { border-color: #f97316; }
-    .card-bio.cat-vasoactive.selected { border-color: #f97316; box-shadow: 0 0 16px rgba(249, 115, 22, 0.8); }
-    .card-match {
-      box-shadow: 0 0 15px #38bdf8, inset 0 0 8px #38bdf8 !important;
-      border-color: #38bdf8 !important;
-    }
-
-    /* CHIPS EXPLÍCITOS DE RECEPTORES (PRR / TLR) */
-    .prr-container {
-      position: absolute;
-      top: 6px;
-      left: 6px;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      z-index: 10;
-    }
-    .prr-badge {
-      background: rgba(15, 23, 42, 0.95);
-      border: 1.5px solid #38bdf8;
-      color: #38bdf8;
-      font-size: 9px;
-      font-weight: 900;
-      padding: 2px 5px;
-      border-radius: 4px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.8);
-      letter-spacing: 0.5px;
-    }
-
-    /* OVERLAY CINEMÁTICO DE RECONOCIMIENTO (DOCKING) */
-    .molecular-docking-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(5, 11, 20, 0.88);
-      backdrop-filter: blur(5px);
-      z-index: 500;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.25s ease-out;
-    }
-    .molecular-docking-overlay.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-  </style>
-</head>
-<body>
-
-  <div id="app-container"> 
-    <div id="intro-screen" class="screen active" style="z-index: 10; background: var(--bg-dark); padding: 30px; justify-content: center; align-items: center; text-align: center;">
-      <h1 style="color: var(--accent); font-size: 32px; font-weight: 900; margin-bottom: 20px; text-transform: uppercase;">InmunoDeck</h1>
-      <div style="background: rgba(15, 23, 42, 0.9); border: 2px solid var(--border); padding: 20px; border-radius: 10px; font-size: 16px; color: #cbd5e1; line-height: 1.6; max-width: 500px; text-align: left; margin-bottom: 30px;">
-        <p><strong>Misión:</strong> Erradicar la amenaza patógena antes de que la integridad tisular (Hospedero) llegue a cero.</p><br>
-        <p><strong>Fase 1 (Reclutamiento):</strong> Selecciona 5 efectores inmunológicos adaptados a la vulnerabilidad del patógeno.</p><br>
-        <p><strong>Fase 2 (Respuesta):</strong> Utiliza ATP (⚡) para desplegar células y proteínas. El ATP se recarga en cada turno.</p>
-      </div>
-      <button class="btn-main" style="max-width: 300px;" onclick="closeIntro()">INICIAR SIMULACIÓN</button>
-    </div>
-
-    <div id="draft-screen" class="screen">
-      <div class="draft-header">
-        <div class="draft-title" id="draft-tissue-name">ANALIZANDO TEJIDO...</div>
-        <div class="pathogen-intel" style="display: flex; align-items: center; gap: 15px; text-align: left;">
-          <div id="draft-pathogen-img" style="width: 70px; height: 70px; background-size: contain; background-position: center; background-repeat: no-repeat; flex-shrink: 0; filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.8));"></div>
-          <div>
-            <div class="pathogen-name" style="justify-content: flex-start; margin-bottom: 4px;">🚨 <span id="draft-pathogen-name"></span></div>
-            <div class="pathogen-vuln" id="draft-vulnerability"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="draft-body">
-        <div style="font-size: 13px; color: #94a3b8; margin-bottom: 10px; font-weight: bold; text-align: center;">Ensambla tu respuesta inmune (<span id="draft-count">0</span>/5 cartas)</div>
-        <div class="draft-grid" id="draft-grid"></div>
-      </div>
-      <div class="draft-footer">
-        <button id="btn-start" class="btn-main" disabled onclick="transitionToBattle()">Desplegar Defensas</button>
-      </div>
-    </div>
-
-    <div id="battle-screen" class="screen">
-      <div id="battle-overlay"></div>
-      
-      <!-- OVERLAY DE RECONOCIMIENTO CINÉTICO GSAP -->
-      <div id="docking-overlay" class="molecular-docking-overlay">
-        <div id="docking-video-container" style="display: none; max-width: 320px; border-radius: 10px; overflow: hidden; margin-bottom: 15px; border: 2px solid var(--accent);"></div>
-        <div id="docking-stage" style="perspective: 800px; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; max-width: 460px;">
-          
-          <div id="docking-canvas-wrap" style="position: relative; width: 320px; height: 180px; display: flex; justify-content: center; align-items: center;">
-            <!-- Anillo de onda expansiva al contacto -->
-            <div id="dock-shockwave" style="position: absolute; width: 40px; height: 40px; border-radius: 50%; border: 3px solid #38bdf8; opacity: 0; pointer-events: none;"></div>
-
-            <!-- Gráfico Vectorial: Herradura TLR (Receptor) y Ligando (PAMP) -->
-            <svg id="dock-svg" viewBox="0 0 320 180" style="width: 100%; height: 100%; overflow: visible;">
-              <defs>
-                <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="6" result="blur" />
-                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                </filter>
-                <filter id="glow-red" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="6" result="blur" />
-                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                </filter>
-              </defs>
-
-              <!-- RECEPTOR PRR (Herradura LRR izquierda) -->
-              <g id="svg-receptor" transform="translate(40, 90)">
-                <path d="M 0,-45 C 40,-45 55,-20 55,0 C 55,20 40,45 0,45 C 20,25 20,-25 0,-45 Z" 
-                      fill="rgba(2, 132, 199, 0.3)" stroke="#38bdf8" stroke-width="3" filter="url(#glow-cyan)" />
-                <!-- Segmentos de repeticiones ricas en leucina (LRR) -->
-                <line x1="12" y1="-30" x2="35" y2="-25" stroke="#38bdf8" stroke-width="2" />
-                <line x1="20" y1="0" x2="45" y2="0" stroke="#38bdf8" stroke-width="2" />
-                <line x1="12" y1="30" x2="35" y2="25" stroke="#38bdf8" stroke-width="2" />
-                <text id="svg-txt-prr" x="15" y="4" fill="#ffffff" font-size="11" font-weight="900" text-anchor="middle" font-family="sans-serif">TLR4</text>
-              </g>
-
-              <!-- LIGANDO PAMP (Módulo antigénico derecho) -->
-              <g id="svg-ligand" transform="translate(280, 90)">
-                <path d="M -25,-25 L 15,-20 L 25,0 L 15,20 L -25,25 L -10,0 Z" 
-                      fill="rgba(220, 38, 38, 0.35)" stroke="#ef4444" stroke-width="3" filter="url(#glow-red)" />
-                <circle cx="-5" cy="-8" r="3" fill="#fca5a5" />
-                <circle cx="5" cy="5" r="3" fill="#fca5a5" />
-                <text id="svg-txt-pamp" x="5" y="4" fill="#ffffff" font-size="11" font-weight="900" text-anchor="middle" font-family="sans-serif">LPS</text>
-              </g>
-            </svg>
-          </div>
-
-          <!-- Bloque de telemetría molecular -->
-          <div id="dock-panel" style="margin-top: 15px; text-align: center;">
-            <div id="dock-status" style="font-size: 11px; font-weight: 800; color: #94a3b8; letter-spacing: 2px; text-transform: uppercase;">ESCANEANDO BOLSILLO DE UNIÓN...</div>
-            <div id="dock-text" style="font-size: 19px; font-weight: 900; color: #38bdf8; text-transform: uppercase; margin-top: 4px; text-shadow: 0 0 12px rgba(56, 189, 248, 0.8);">¡ACOPLE LIGANDO-RECEPTOR!</div>
-            <div id="dock-sub" style="font-size: 10px; font-weight: 700; color: #22c55e; margin-top: 4px; letter-spacing: 1px;">DIMERIZACIÓN ➔ VÍA MyD88 ACTIVADA (CRÍTICO ×1.75)</div>
-          </div>
-
-        </div>
-      </div>
-
-      <div class="battle-ui">
-        <div class="hud-top">
-          <div class="env-title-battle" id="env-title">Epidermis</div>
-          <div class="system-alert"><div class="alert-box" id="sys-alert">Célula Dendrítica Migrando...</div></div>
-          <div class="bars-container">
-            <div class="bar-wrapper">
-              <div class="bar-label" style="color: var(--success);">Hospedero</div>
-              <div class="bar-bg"><div id="player-bar" class="bar-fill"></div><div id="player-hp-txt" class="bar-text">100/100</div></div>
-            </div>
-            <div class="bar-wrapper">
-              <div class="bar-label" id="enemy-name" style="color: var(--danger); text-align: right;">Patógeno</div>
-              <div class="bar-bg" style="display: flex; justify-content: flex-end;"><div id="enemy-bar" class="bar-fill"></div><div id="enemy-hp-txt" class="bar-text">100/100</div></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="arena" id="arena">
-          <div id="enemy-avatar" class="enemy-avatar">
-            <div id="status-stun" class="status-icon">😵</div>
-            <div id="status-opsonized" class="status-opsonized">🎯</div>
-          </div>
-        </div>
-
-        <div class="hud-bottom">
-          <div class="controls">
-            <div class="energy-display">⚡ ATP: <span id="energy-val">4</span></div>
-            <button id="btn-end-turn" class="btn-turn" onclick="startEnemyTurn()">Pasar Turno</button>
-          </div>
-          <div class="hand-container" id="battle-hand"></div>
-        </div>
-      </div>
-    </div>
-
-    <div id="turn-announcer" class="turn-announcer">TURNO DEL PATÓGENO</div>
-
-    <div id="end-modal" class="modal-overlay">
-      <div id="end-title" class="modal-title"></div>
-      <div id="end-desc" class="modal-desc"></div>
-      <div id="end-video-container" style="margin-bottom: 25px; border-radius: 8px; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.8); max-width: 90%; width: 400px;"></div>
-      <button class="btn-turn" style="padding: 15px 30px; font-size: 18px; box-shadow: 0 6px 0 #1d4ed8;" onclick="location.reload()">NUEVA INFECCIÓN</button>
-    </div>
-  </div>
-
-  <script>
-    const IMG = {
-      neutrofilo: 'neutrofilo.jpg',
-      macrofago1: 'macrofago1.jpg',
-      macrofago2: 'macrofago2.jpg',
-      nk: 'nk.jpg',
-      bgPiel: 'piel.jpg',
-      bgMucosa: 'epiteliomucoso.jpg',
-      bgGalt: 'mucosa.jpg',
-      pathoBact: 'bacteria.png',
-      pathoVirus: 'virus.gif',
-      pathoHelm: 'helminto.PNG',
-      eosinofilo: 'eosinofilo.jpg',
-      complemento: 'complemento.jpg.jpg',
-      interferon: 'interferon.jpg',
-      dendritica: 'celula_dentritica.jpg',
-      mastocito: 'mastocito.jpg'
-    };
-
-    const SCENARIOS = [
-      { 
-        id: 'piel', 
-        name: 'Epidermis (Corte Tisular)', 
-        enemy: 'Staphylococcus aureus', 
-        type: 'bacteria_gp', 
-        hp: 170, 
-        atk: 25, 
-        pamps: ['PGN', 'LTA'],
-        bg: IMG.bgPiel, 
-        avatar: IMG.pathoBact, 
-        vuln: 'PAMPs: [PGN] [LTA]. Vulnerable a: TLR2, Macrófagos M1 y Defensinas/AMPs. Alta inducción de DAMPs.',
-        video: 'macrofago_patogeno.mp4' 
-      },
-      { 
-        id: 'galt_bact', 
-        name: 'Mucosa Intestinal (Lumen)', 
-        enemy: 'E. coli Enteropatógena', 
-        type: 'bacteria_gn', 
-        hp: 200, 
-        atk: 20, 
-        pamps: ['LPS'],
-        bg: IMG.bgGalt, 
-        avatar: IMG.pathoBact, 
-        vuln: 'PAMPs: [LPS]. Vulnerable a: TLR4, Opsonización C3b y lisis por MAC.',
-        video: 'macrofago_patogeno.mp4' 
-      },
-      { 
-        id: 'galt_helm', 
-        name: 'Mucosa Intestinal (Invasión Helmíntica)', 
-        enemy: 'Helminto Parásito', 
-        type: 'helminto', 
-        hp: 240, 
-        atk: 22, 
-        pamps: ['GLICOPROTEINAS'],
-        bg: IMG.bgGalt, 
-        avatar: IMG.pathoHelm, 
-        vuln: 'Inmune a fagocitosis estándar. Letal frente a Eosinófilos (Proteína Básica Mayor) e Histamina.',
-        video: 'video_helminto.mp4' 
-      },
-      { 
-        id: 'alveolo', 
-        name: 'Alvéolo Pulmonar', 
-        enemy: 'Virus ARN (Influenza / Corona)', 
-        type: 'virus', 
-        hp: 130, 
-        atk: 35, 
-        pamps: ['ARNbc', 'ARNmc'],
-        bg: IMG.bgMucosa, 
-        avatar: IMG.pathoVirus, 
-        vuln: 'PAMPs: [ARNbc]. Vulnerable a: Células NK (Missing Self) y Escudo de Interferón Tipo I (IFN-α/β).',
-        video: 'video_macrofago_virus_celula_infectada.mp4' 
-      },
-      { 
-        id: 'bazo', 
-        name: 'Sinusoides Esplénicos (Sepsis)', 
-        enemy: 'Diseminación Sepsis Gram-', 
-        type: 'bacteria_gn', 
-        hp: 280, 
-        atk: 32, 
-        pamps: ['LPS'], 
-        bg: IMG.bgPiel,
-        avatar: IMG.pathoBact, 
-        vuln: 'Infección intravascular. Requiere lisis acelerada por Vía Alternativa/MAC y Linfocitos B1 (IgM).',
-        video: 'macrofago_patogeno.mp4' 
-      }
-    ];
-
-    const CARDS = [
-      { id: 'neutro', name: 'Neutrófilo', category: 'cat-cell', cost: 1, type: 'atk', val: 30, prrs: ['TLR2', 'TLR4'], img: IMG.neutrofilo, bio: 'Fagocito rápido.', mechanic: 'Daño: 30. Afinidad: PGN y LPS.' },
-      { id: 'macroM1', name: 'Macrófago M1', category: 'cat-cell', cost: 2, type: 'atk', val: 50, prrs: ['TLR4', 'TLR2', 'NLRP3'], img: IMG.macrofago1, bio: 'Estallido respiratorio lítico.', mechanic: 'Daño: 50. Crítico con TLR4/LPS y buff por DAMPs.' },
-      { id: 'macroM2', name: 'Macrófago M2', category: 'cat-cell', cost: 2, type: 'heal', val: 40, prrs: ['CD206'], img: IMG.macrofago2, bio: 'Regenerador tisular y angiogénesis.', mechanic: 'Repara +40 HP y remueve DAMPs del tejido.' },
-      { id: 'nk', name: 'Célula NK', category: 'cat-cell', cost: 2, type: 'atk', val: 40, prrs: ['ARNbc', 'ARNmc'], img: IMG.nk, bio: 'Induce apoptosis en células infectadas.', mechanic: 'Daño: 40. Crítico contra virus.' },
-      { id: 'eosino', name: 'Eosinófilo', category: 'cat-cell', cost: 2, type: 'atk', val: 25, prrs: ['GLICOPROTEINAS'], img: IMG.eosinofilo, bio: 'Secreta Proteína Básica Mayor.', mechanic: 'Daño: 25. Letal (x3) vs Helmintos.' },
-      { id: 'masto', name: 'Histamina (Mastocito)', category: 'cat-vasoactive', cost: 1, type: 'stun', prrs: [], img: IMG.mastocito, bio: 'Secreción masiva de histamina.', mechanic: 'Aturde al patógeno por permeabilidad vascular.' },
-      { id: 'comp', name: 'Complemento', category: 'cat-soluble', cost: 1, type: 'buff', prrs: ['LPS', 'PGN'], img: IMG.complemento, bio: 'Lisis y opsonización.', mechanic: 'Marca al patógeno: habilita fagocitosis x3 en M1/Neutrófilos.' },
-      { id: 'ifn', name: 'Interferón α/β', category: 'cat-soluble', cost: 1, type: 'shield', prrs: [], img: IMG.interferon, bio: 'Crea resistencia celular.', mechanic: 'Reduce el ataque enemigo a la mitad.' },
-      { id: 'dendro', name: 'C. Dendrítica', category: 'cat-cell', cost: 3, type: 'ultimate', prrs: ['TLR3', 'TLR4', 'TLR2'], img: IMG.dendritica, bio: 'Puente a la inmunidad adaptativa.', mechanic: 'Procesa antígenos. Dispara respuesta T/B.' },
-      { id: 'langerhans', name: 'C. Langerhans', category: 'cat-cell', cost: 1, type: 'buff', prrs: ['TLR2'], img: IMG.dendritica, bio: 'Centinela epidérmico.', mechanic: 'Alerta tisular: Recupera +1 ATP inmediato.' },
-      { id: 'trm', name: 'T Residente', category: 'cat-cell', cost: 2, type: 'atk', val: 35, prrs: ['PGN'], img: IMG.neutrofilo, bio: 'Vigilancia tisular periférica.', mechanic: 'Daño rápido tisular: 35.' }
-    ];
-
-    let currentScen = null;
-    let deck = [];
-    let playerHp = 100, enemyHp = 100, maxEnemyHp = 100;
-    let atp = 4, maxAtp = 4;
-    let turnState = 'PLAYER';
-    let opsonized = false, shielded = false, stunned = false;
-    let adaptiveTimer = -1;
-    let dampsLevel = 0;
-
-    function closeIntro() {
-      document.getElementById('intro-screen').classList.remove('active');
-      document.getElementById('draft-screen').classList.add('active');
-      initApp();
-    }
-
-    function initApp() {
-      currentScen = SCENARIOS[Math.floor(Math.random() * SCENARIOS.length)];
-      
-      const pampBadges = currentScen.pamps ? currentScen.pamps.map(p => `[${p}]`).join(' ') : '';
-      
-      document.getElementById('draft-tissue-name').innerText = currentScen.name;
-      document.getElementById('draft-pathogen-name').innerText = `${currentScen.enemy} (${currentScen.type.toUpperCase()}) ${pampBadges}`;
-      document.getElementById('draft-vulnerability').innerText = currentScen.vuln;
-      document.getElementById('draft-pathogen-img').style.backgroundImage = `url('${currentScen.avatar}')`;
-      
-      const grid = document.getElementById('draft-grid');
-      grid.innerHTML = '';
-      CARDS.forEach(c => {
-        const prrBadges = (c.prrs && c.prrs.length > 0)
-          ? `<div class="prr-container">${c.prrs.map(r => `<span class="prr-badge">${r}</span>`).join('')}</div>`
-          : '';
-
-        const el = document.createElement('div');
-        el.className = `card-bio ${c.category}`;
-        el.innerHTML = `
-          ${prrBadges}
-          <div class="c-img" style="background-image: url('${c.img}')"></div>
-          <div class="c-cost">${c.cost}</div>
-          <div class="c-info">
-            <div class="c-name">${c.name}</div>
-            <div class="c-bio-desc">${c.bio}</div>
-            <div class="c-mechanic">${c.mechanic}</div>
-          </div>`;
-        el.onclick = () => toggleSelection(c, el);
-        grid.appendChild(el);
-      });
-    }
-
-    function toggleSelection(cardObj, element) {
-      const idx = deck.indexOf(cardObj);
-      if (idx > -1) { deck.splice(idx, 1); element.classList.remove('selected'); }
-      else if (deck.length < 5) { deck.push(cardObj); element.classList.add('selected'); }
-      document.getElementById('draft-count').innerText = deck.length;
-      document.getElementById('btn-start').disabled = deck.length !== 5;
-    }
-
-    function transitionToBattle() {
-      document.getElementById('draft-screen').classList.remove('active');
-      const battleScreen = document.getElementById('battle-screen');
-      battleScreen.style.backgroundImage = `url('${currentScen.bg}')`;
-      battleScreen.classList.add('active');
-      document.getElementById('env-title').innerText = currentScen.name;
-      document.getElementById('enemy-avatar').style.backgroundImage = `url('${currentScen.avatar}')`;
-      enemyHp = maxEnemyHp = currentScen.hp;
-      dampsLevel = 0;
-      updateBattleUI();
-      const pampBadges = currentScen.pamps ? currentScen.pamps.map(p => `[${p}]`).join(' ') : '';
-      document.getElementById('enemy-name').innerText = `${currentScen.enemy} ${pampBadges}`;
-    }
-
-    function updateBattleUI() {
-      document.getElementById('player-bar').style.width = `${Math.max(0, playerHp)}%`;
-      document.getElementById('player-hp-txt').innerText = `${Math.max(0, playerHp)} / 100`;
-      document.getElementById('enemy-bar').style.width = `${Math.max(0, (enemyHp / maxEnemyHp) * 100)}%`;
-      document.getElementById('enemy-hp-txt').innerText = `${Math.max(0, enemyHp)} / ${maxEnemyHp}`;
-      document.getElementById('energy-val').innerText = atp;
-      
-      document.getElementById('status-stun').style.display = stunned ? 'flex' : 'none';
-      document.getElementById('status-opsonized').style.display = opsonized ? 'flex' : 'none';
-
-      const btnEndTurn = document.getElementById('btn-end-turn');
-      if (atp === 0) {
-        btnEndTurn.classList.add('btn-pulse');
-      } else {
-        btnEndTurn.classList.remove('btn-pulse');
-      }
-
-      const alertBox = document.getElementById('sys-alert');
-      if (dampsLevel > 0) {
-        alertBox.innerText = `⚠️ DAMPs Nivel ${dampsLevel} (Estrés Tisular)`;
-        alertBox.style.opacity = 1;
-      } else if (adaptiveTimer === 2) { 
-        alertBox.innerText = "Dendrítica migrando: Faltan 2 turnos"; 
-        alertBox.style.opacity = 1; 
-      } else if (adaptiveTimer === 1) { 
-        alertBox.innerText = "Expansión Clonal (Linfocitos): Falta 1 turno"; 
-        alertBox.style.opacity = 1; 
-      } else { 
-        alertBox.style.opacity = 0; 
-      }
-      
-      const hand = document.getElementById('battle-hand');
-      hand.innerHTML = '';
-      deck.forEach(c => {
-        let displayCost = c.cost;
-        if (opsonized && (c.id === 'neutro' || c.id === 'macroM1' || c.id === 'macroM2')) displayCost = 0;
-        
-        const isDisabled = turnState !== 'PLAYER' || atp < displayCost || (c.id === 'dendro' && adaptiveTimer > -1);
-        
-        const affinity = evaluateAffinity(c, currentScen);
-        const matchClass = affinity.hasMatch ? 'card-match' : '';
-
-        const prrBadges = (c.prrs && c.prrs.length > 0)
-          ? `<div class="prr-container">${c.prrs.map(r => `<span class="prr-badge">${r}</span>`).join('')}</div>`
-          : '';
-
-        const el = document.createElement('div');
-        el.className = `card-bio ${c.category} ${matchClass} ${isDisabled ? 'disabled' : ''}`;
-        
-        const costStyle = displayCost === 0 ? 'background: #a855f7; color: white; box-shadow: 0 0 10px #a855f7;' : '';
-        
-        el.innerHTML = `
-          ${prrBadges}
-          <div class="c-img" style="background-image: url('${c.img}')"></div>
-          <div class="c-cost" style="${costStyle}">${displayCost}</div>
-          <div class="c-info">
-            <div class="c-name">${c.name}</div>
-            <div class="c-mechanic">${c.mechanic}</div>
-          </div>`;
-        
-        el.onclick = (e) => executePlayerAction(c, e.currentTarget);
-        hand.appendChild(el);
-      });
-    }
-
-    const MOLECULAR_RULES = {
-      'TLR4': ['LPS'],
-      'TLR2': ['PGN', 'LTA'],
-      'ARNbc': ['ARNbc'],
-      'ARNmc': ['ARNmc'],
-      'GLICOPROTEINAS': ['GLICOPROTEINAS']
-    };
-
-    function evaluateAffinity(card, scenario) {
-      if (!card.prrs || !scenario.pamps) return { hasMatch: false, receptor: null, ligand: null };
-      for (let r of card.prrs) {
-        const targets = MOLECULAR_RULES[r] || [];
-        for (let p of scenario.pamps) {
-          if (targets.includes(p)) return { hasMatch: true, receptor: r, ligand: p };
-        }
-      }
-      return { hasMatch: false, receptor: null, ligand: null };
-    }
-
-    function playMolecularDocking(receptor, ligand, videoPath, callback) {
-      const overlay = document.getElementById('docking-overlay');
-      const vContainer = document.getElementById('docking-video-container');
-      const stage = document.getElementById('docking-stage');
-      const txtPrr = document.getElementById('svg-txt-prr');
-      const txtPamp = document.getElementById('svg-txt-pamp');
-      const dockText = document.getElementById('dock-text');
-      const dockSub = document.getElementById('dock-sub');
-      const shockwave = document.getElementById('dock-shockwave');
-
-      // Si existe un video asignado al reconocimiento, se proyecta prioritariamente
-      if (videoPath) {
-        if (stage) stage.style.display = 'none';
-        if (vContainer) {
-          vContainer.style.display = 'block';
-          vContainer.innerHTML = `<video autoplay muted playsinline style="width: 100%; display: block;"><source src="${videoPath}" type="video/mp4"></video>`;
-        }
-        overlay.classList.add('active');
-        setTimeout(() => {
-          overlay.classList.remove('active');
-          if (callback) callback();
-        }, 1400);
-        return;
-      }
-
-      // Animación cinética vectorial con GSAP
-      if (vContainer) vContainer.style.display = 'none';
-      if (stage) stage.style.display = 'flex';
-
-      if (txtPrr) txtPrr.textContent = receptor;
-      if (txtPamp) txtPamp.textContent = ligand;
-      if (dockText) dockText.textContent = `¡ACOPLE: ${receptor} ⮂ ${ligand}!`;
-      if (dockSub) dockSub.textContent = `DIMERIZACIÓN ➔ TRANSDUCCIÓN VÍA MyD88 (CRÍTICO ×1.75)`;
-
-      overlay.classList.add('active');
-
-      if (window.gsap) {
-        const tl = gsap.timeline({
-          onComplete: () => {
-            overlay.classList.remove('active');
-            if (callback) callback();
-          }
-        });
-
-        // 1. Reset posicional en 3D
-        tl.set('#docking-stage', { scale: 0.8, opacity: 0, rotateX: 15 })
-          .set('#svg-receptor', { x: 30, opacity: 0.2, rotation: -20 })
-          .set('#svg-ligand', { x: 290, opacity: 0.2, rotation: 20 })
-          .set(shockwave, { scale: 0.2, opacity: 0 })
-          .set('#dock-panel', { y: 20, opacity: 0 });
-
-        // 2. Encuadre
-        tl.to('#docking-stage', { scale: 1, opacity: 1, rotateX: 0, duration: 0.35, ease: "power2.out" })
-          .to('#dock-panel', { y: 0, opacity: 1, duration: 0.25, ease: "power1.out" }, "-=0.2");
-
-        // 3. Colisión y acople conformacional del TLR
-        tl.to('#svg-receptor', { x: 125, opacity: 1, rotation: 0, duration: 0.45, ease: "power3.in" }, "dock")
-          .to('#svg-ligand', { x: 185, opacity: 1, rotation: 0, duration: 0.45, ease: "power3.in" }, "dock");
-
-        // 4. Detonación de onda expansiva y estallido elástico
-        tl.to(shockwave, { scale: 6, opacity: 0.9, duration: 0.1, ease: "power1.out" })
-          .to(shockwave, { opacity: 0, duration: 0.25, ease: "power1.in" })
-          .to('#dock-svg', { x: "+=6", yoyo: true, repeat: 5, duration: 0.04 }, "-=0.3")
-          .to(['#svg-receptor', '#svg-ligand'], { scale: 1.15, yoyo: true, repeat: 1, duration: 0.15, transformOrigin: "center center" }, "-=0.3");
-
-        tl.to({}, { duration: 0.3 });
-      } else {
-        setTimeout(() => {
-          overlay.classList.remove('active');
-          if (callback) callback();
-        }, 1400);
-      }
-    }
-
-    function executePlayerAction(card, cardElement) {
-      let cost = card.cost;
-      let isSynergy = false;
-      if (opsonized && (card.id === 'neutro' || card.id === 'macroM1' || card.id === 'macroM2')) {
-        cost = 0;
-        isSynergy = true;
-      }
-
-      if (turnState !== 'PLAYER' || atp < cost || (card.id === 'dendro' && adaptiveTimer > -1)) return;
-      
-      atp -= cost;
-      
-      const cardRect = cardElement.getBoundingClientRect();
-      const eAvatar = document.getElementById('enemy-avatar');
-      const eRect = eAvatar.getBoundingClientRect();
-      
-      const startX = cardRect.left + cardRect.width / 2;
-      const startY = cardRect.top + cardRect.height / 2;
-      const endX = eRect.left + eRect.width / 2;
-      const endY = eRect.top + eRect.height / 2;
-
-      const proj = document.createElement('div');
-      proj.className = 'projectile-player';
-      proj.style.backgroundImage = `url('${card.img}')`;
-      proj.style.left = `${startX - 27.5}px`; 
-      proj.style.top = `${startY - 27.5}px`;
-      document.body.appendChild(proj);
-
-      void proj.offsetWidth; 
-
-      proj.style.transform = `translate(${endX - startX}px, ${endY - startY}px) scale(1.3) rotate(360deg)`;
-
-      setTimeout(() => {
-        proj.remove();
-
-        if (card.type === 'atk') {
-          let dmg = card.val;
-          const affinity = evaluateAffinity(card, currentScen);
-
-          const proceedDamage = () => {
-            if (affinity.hasMatch) {
-              dmg = Math.floor(dmg * 1.75);
-              spawnText(`CRÍTICO: ${affinity.receptor} ⮂ ${affinity.ligand}`, '#38bdf8', endX, endY - 60);
-            }
-
-            if (dampsLevel > 0) {
-              dmg += (dampsLevel * 4);
-              if (card.prrs && card.prrs.includes('NLRP3')) {
-                dmg += 15;
-                spawnText("INFLAMASOMA NLRP3 (+15)", '#f97316', endX, endY - 40);
-              }
-            }
-
-            if (card.id === 'eosino' && currentScen.type === 'helminto') {
-              dmg *= 2;
-              spawnText("PROTEÍNA BÁSICA MAYOR", '#22c55e', endX, endY - 80);
-            }
-
-            if (opsonized) {
-              dmg = Math.floor(dmg * 2);
-              if (isSynergy) {
-                spawnText("FAGOCITOSIS MEJORADA (CR1)", '#a855f7', endX, endY - 50);
-                opsonized = false;
-              }
-            }
-
-            enemyHp -= dmg;
-            spawnText(`-${dmg}`, '#ef4444', endX, endY);
-            triggerShake(eAvatar);
-            updateBattleUI();
-            checkVictory();
-          };
-
-          if (affinity.hasMatch) {
-            playMolecularDocking(affinity.receptor, affinity.ligand, null, proceedDamage);
-          } else {
-            proceedDamage();
-          }
-          return;
-        }
-        else if (card.type === 'heal') {
-          playerHp = Math.min(100, playerHp + card.val);
-          dampsLevel = Math.max(0, dampsLevel - 1);
-          spawnText(`+${card.val}`, '#22c55e', endX, endY + 40);
-        }
-        else if (card.type === 'stun') { 
-          stunned = true; 
-          spawnText("ATURDIDO", '#eab308', endX, endY); 
-        }
-        else if (card.type === 'buff') { 
-          if(card.id === 'langerhans') { 
-            atp = Math.min(maxAtp, atp + 1); 
-            spawnText("ALERTA CENTINELA", '#38bdf8', endX, endY); 
-          } else { 
-            opsonized = true; 
-            spawnText("OPSONIZADO", '#a855f7', endX, endY); 
-          }
-        }
-        else if (card.type === 'shield') { 
-          shielded = true; 
-          spawnText("ESCUDO IFN", '#38bdf8', endX, endY); 
-        }
-        else if (card.type === 'ultimate') { 
-          adaptiveTimer = 2; 
-          spawnText("APC MIGRANDO", '#d8b4fe', endX, endY); 
-        }
-
-        updateBattleUI();
-        checkVictory();
-      }, 400);
-    }
-
-    function checkVictory() {
-      if (enemyHp <= 0) endGame('VICTORIA INMUNOLÓGICA', 'El tejido ha sido asegurado.', '#22c55e');
-    }
-
-    function startEnemyTurn() {
-      if (turnState !== 'PLAYER' || enemyHp <= 0) return;
-      turnState = 'ENEMY';
-      updateBattleUI();
-
-      if (stunned) {
-        stunned = false;
-        const ann = document.getElementById('turn-announcer');
-        ann.innerText = "PATÓGENO ATURDIDO";
-        ann.style.background = "#ca8a04";
-        ann.classList.add('show');
-        setTimeout(() => { ann.classList.remove('show'); resetPlayerTurn(); }, 1500);
-        return;
-      }
-
-      const ann = document.getElementById('turn-announcer');
-      ann.innerText = `TURNO DEL PATÓGENO`;
-      ann.style.background = "rgba(220, 38, 38, 0.95)";
-      ann.classList.add('show');
-      
-      setTimeout(() => {
-        ann.classList.remove('show');
-        const avatar = document.getElementById('enemy-avatar');
-        avatar.style.transform = "scale(1.3) translateY(30px) rotate(-15deg)";
-        
-        setTimeout(() => {
-          let eDmg = currentScen.atk;
-          if (shielded) { eDmg = Math.floor(eDmg / 2); shielded = false; }
-          
-          const eRect = avatar.getBoundingClientRect();
-          const pRect = document.getElementById('player-bar').getBoundingClientRect();
-          
-          const proj = document.createElement('div');
-          proj.className = 'toxin-projectile';
-          proj.style.left = `${eRect.left + eRect.width/2}px`;
-          proj.style.top = `${eRect.top + eRect.height/2}px`;
-          document.body.appendChild(proj);
-          
-          void proj.offsetWidth;
-          
-          const distX = (pRect.left + pRect.width/2) - (eRect.left + eRect.width/2);
-          const distY = pRect.top - (eRect.top + eRect.height/2);
-          proj.style.transform = `translate(${distX}px, ${distY}px)`;
-          
-          setTimeout(() => proj.remove(), 300);
-
-          playerHp -= eDmg;
-          dampsLevel++;
-          spawnText(`-${eDmg}`, '#ef4444', pRect.left + pRect.width/2, pRect.top - 20);
-          
-          document.body.classList.add('damage-flash');
-          setTimeout(() => document.body.classList.remove('damage-flash'), 500);
-
-          avatar.style.transform = "scale(1) translateY(0) rotate(0deg)";
-          updateBattleUI();
-
-          if (playerHp <= 0) endGame('INFECCIÓN SISTÉMICA', 'Sepsis. El patógeno venció las defensas.', '#ef4444');
-          else setTimeout(resetPlayerTurn, 1000);
-        }, 300);
-      }, 1200);
-    }
-
-    function resetPlayerTurn() {
-      if (turnState === 'GAMEOVER') return;
-      
-      if (adaptiveTimer > 0) adaptiveTimer--;
-      
-      if (adaptiveTimer === 0) {
-        adaptiveTimer = -1;
-        const eAvatar = document.getElementById('enemy-avatar');
-        const r = eAvatar.getBoundingClientRect();
-        const ann = document.getElementById('turn-announcer');
-        ann.innerText = "ATAQUE LINFOCITARIO";
-        ann.style.background = "rgba(168, 85, 247, 0.95)";
-        ann.classList.add('show');
-        
-        setTimeout(() => {
-          ann.classList.remove('show');
-          enemyHp -= 120;
-          spawnText("-120", '#d8b4fe', r.left + r.width/2, r.top + r.height/2);
-          triggerShake(eAvatar);
-          updateBattleUI();
-          checkVictory();
-          if (enemyHp > 0) resetNormalTurn();
-        }, 1500);
-      } else {
-        resetNormalTurn();
-      }
-    }
-
-    function resetNormalTurn() {
-      atp = maxAtp;
-      turnState = 'PLAYER';
-      updateBattleUI();
-    }
-
-    function endGame(title, desc, color) {
-      turnState = 'GAMEOVER';
-      setTimeout(() => {
-        const modal = document.getElementById('end-modal');
-        const videoContainer = document.getElementById('end-video-container');
-        
-        document.getElementById('end-title').innerText = title;
-        document.getElementById('end-title').style.color = color;
-        document.getElementById('end-desc').innerText = desc;
-        
-        videoContainer.innerHTML = '';
-        
-        if (currentScen.video && currentScen.video !== '' && color === '#22c55e') {
-          videoContainer.innerHTML = `
-            <video autoplay loop controls playsinline style="height: 45vh; max-width: 100%; object-fit: contain; border-radius: 8px; background: #000;">
-              <source src="${currentScen.video}" type="video/mp4">
-              Tu navegador no soporta videos HTML5.
-            </video>
-          `;
-        }
-
-        modal.classList.add('active');
-      }, 800);
-    }
-
-    function spawnText(txt, color, x, y) {
-      const el = document.createElement('div');
-      el.className = 'fct'; el.style.color = color; el.innerText = txt;
-      el.style.left = `${x - 40}px`; el.style.top = `${y - 20}px`;
-      document.body.appendChild(el);
-      setTimeout(() => el.remove(), 1200);
-    }
-
-    function triggerShake(element) { element.classList.remove('shake'); void element.offsetWidth; element.classList.add('shake'); }
-
-    window.onload = initApp;
-  </script>
-</body>
-</html>
-
-
-
+<html lang="es"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>InmunoDeck</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<style>
+:root{--bg:#050b14;--ac:#38bdf8;--dg:#ef4444;--ok:#22c55e;--en:#fbbf24;--bd:#334155}
+*{box-sizing:border-box;margin:0;padding:0;touch-action:manipulation;font-family:system-ui,sans-serif}
+body{background:#000;color:#fff;height:100dvh;overflow:hidden;user-select:none}
+#app{position:relative;height:100%;background:var(--bg)}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .6s;background-size:cover;background-position:center}
+.screen.active{opacity:1;pointer-events:auto}
+#draft{background:linear-gradient(135deg,#091325,#1e293b)}
+.dh{padding:12px 16px;text-align:center;background:rgba(0,0,0,.6);border-bottom:3px solid var(--dg)}
+.dt{font-size:22px;font-weight:900;color:var(--ac);text-transform:uppercase}
+.intel{display:flex;gap:12px;align-items:center;text-align:left;background:rgba(239,68,68,.15);border:1px solid var(--dg);border-radius:8px;padding:8px;margin-top:6px}
+#d-img{width:64px;height:64px;flex-shrink:0;background-size:contain;background-position:center;background-repeat:no-repeat}
+.pn{font-size:15px;font-weight:900;color:var(--dg);text-transform:uppercase}
+.pv{font-size:12px;color:#cbd5e1;margin-top:3px;line-height:1.35}
+.pe{font-size:12px;color:#fbbf24;margin-top:3px;line-height:1.35}
+.db{flex:1;overflow-y:auto;padding:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,190px));justify-content:center;gap:14px;padding-bottom:20px}
+.df{padding:12px 16px max(16px,env(safe-area-inset-bottom));background:rgba(15,23,42,.95);border-top:2px solid var(--bd)}
+.card{background:#1e293b;border:3px solid #334155;border-radius:10px;overflow:hidden;display:flex;flex-direction:column;position:relative;cursor:pointer;transition:transform .2s}
+.card.sel{box-shadow:0 0 15px rgba(34,197,94,.7);transform:translateY(-4px)}
+.card.off{filter:grayscale(1) brightness(.45);pointer-events:none}
+.card:active{transform:scale(.96)}
+.card.cell{border-color:#38bdf8}.card.sol{border-color:#10b981}.card.vaso{border-color:#f97316}
+.card.match{box-shadow:0 0 16px #38bdf8,inset 0 0 8px #38bdf8}
+.ci{height:230px;background-size:cover;background-position:center 20%;background-repeat:no-repeat;background-color:#0f172a}
+.cc{position:absolute;top:4px;right:4px;background:var(--en);color:#000;width:26px;height:26px;border-radius:50%;display:flex;justify-content:center;align-items:center;font-weight:900;border:2px solid #000;z-index:5}
+.cf{background:#0f172a;padding:6px;flex:1;display:flex;flex-direction:column;gap:3px}
+.cn{font-size:12px;font-weight:900;text-transform:uppercase;text-align:center}
+.cm{font-size:10px;color:var(--ac);font-weight:700;text-align:center;background:rgba(56,189,248,.1);padding:4px;border-radius:4px;margin-top:auto}
+.prr{position:absolute;top:6px;left:6px;display:flex;flex-direction:column;gap:3px;z-index:5}
+.prr span{background:rgba(15,23,42,.95);border:1.5px solid #38bdf8;color:#38bdf8;font-size:9px;font-weight:900;padding:2px 5px;border-radius:4px}
+.btn{width:100%;background:var(--ok);color:#fff;border:0;padding:15px;border-radius:12px;font-weight:900;font-size:17px;text-transform:uppercase;box-shadow:0 5px 0 #166534}
+.btn:active{transform:translateY(4px);box-shadow:none}
+.btn:disabled{background:#475569;opacity:.5;box-shadow:0 5px 0 #1e293b}
+#bo{position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.3),rgba(0,0,0,.85));z-index:1}
+.bui{position:relative;z-index:2;display:flex;flex-direction:column;height:100%}
+.top{padding:12px 15px}
+.et{font-size:22px;font-weight:900;text-align:center;color:var(--ac);text-transform:uppercase;margin-bottom:8px;text-shadow:2px 2px 4px #000}
+.bars{display:flex;gap:10px}
+.bw{flex:1;background:rgba(0,0,0,.8);padding:6px;border-radius:8px;border:1px solid var(--bd)}
+.bl{font-size:11px;font-weight:900;text-transform:uppercase;margin-bottom:3px}
+.bb{background:#1e293b;height:22px;border-radius:11px;overflow:hidden;position:relative;border:2px solid #000}
+.bf{height:100%;transition:width .4s}
+#pb{background:linear-gradient(90deg,#16a34a,#22c55e)}#eb{background:linear-gradient(90deg,#dc2626,#ef4444);margin-left:auto}
+.bt{position:absolute;inset:0;display:flex;justify-content:center;align-items:center;font-size:13px;font-weight:900;text-shadow:1px 1px 2px #000}
+#flags{text-align:center;margin-top:6px;min-height:24px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.flag{font-size:11px;font-weight:900;padding:3px 9px;border-radius:12px;border:1px solid #fff}
+.arena{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;position:relative;min-height:0}
+#ea{width:230px;height:230px;background-size:contain;background-position:center;background-repeat:no-repeat;position:relative;animation:br 3.5s ease-in-out infinite;filter:drop-shadow(0 0 25px rgba(239,68,68,.8))}
+#ea.evade{filter:drop-shadow(0 0 18px #fbbf24) saturate(.6)}
+@keyframes br{50%{transform:scale(1.06)}}
+#intent{margin-top:6px;font-size:14px;font-weight:900;color:#fca5a5;text-shadow:1px 1px 2px #000}
+.bot{background:rgba(0,0,0,.85);padding:8px 12px max(8px,env(safe-area-inset-bottom));border-top:2px solid var(--bd)}
+.ctl{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.atp{font-size:20px;font-weight:900;color:var(--en)}
+.bturn{background:#3b82f6;color:#fff;border:0;padding:10px 18px;border-radius:8px;font-weight:900;text-transform:uppercase;box-shadow:0 4px 0 #1d4ed8}
+.bturn:active{transform:translateY(4px);box-shadow:none}
+.pulse{animation:pg 1.2s infinite}@keyframes pg{50%{transform:scale(1.06);filter:brightness(1.3)}}
+.hand{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.hand .card{width:150px;flex-shrink:0}.hand>.card:first-child{margin-left:auto}.hand>.card:last-child{margin-right:auto}.hand .ci{height:180px}.hand .cm{font-size:9px}
+.fct{position:fixed;z-index:600;font-size:26px;font-weight:900;text-shadow:2px 2px 0 #000;pointer-events:none;animation:fu 1.3s forwards;white-space:nowrap;transform:translateX(-50%)}
+@keyframes fu{0%{opacity:1;transform:translate(-50%,0) scale(.6)}20%{transform:translate(-50%,-30px) scale(1.2)}100%{opacity:0;transform:translate(-50%,-110px)}}
+.shake{animation:sk .4s both}@keyframes sk{20%,80%{transform:translateX(12px);filter:brightness(2)}40%,60%{transform:translateX(-14px)}}
+.flash{animation:fl .5s}@keyframes fl{50%{box-shadow:inset 0 0 150px 60px rgba(239,68,68,.9)}}
+.proj{position:fixed;width:50px;height:50px;border-radius:50%;background-size:cover;background-position:center;box-shadow:0 0 20px var(--ac);z-index:300;pointer-events:none;transition:transform .4s cubic-bezier(.2,.8,.2,1)}
+.ann{position:absolute;top:40%;left:-100vw;width:100vw;padding:22px 0;text-align:center;font-size:28px;font-weight:900;text-transform:uppercase;z-index:100;transition:transform .6s cubic-bezier(.175,.885,.32,1.275)}
+.ann.show{transform:translateX(100vw)}
+.modal,#dock{position:absolute;inset:0;background:rgba(0,0,0,.93);z-index:200;display:flex;flex-direction:column;justify-content:center;align-items:center;opacity:0;pointer-events:none;transition:opacity .3s;padding:20px;text-align:center}
+#dock{background:rgba(5,11,20,.92);z-index:500;backdrop-filter:blur(5px)}
+.modal.on,#dock.on{opacity:1;pointer-events:auto}
+.mt{font-size:34px;font-weight:900;text-transform:uppercase;margin-bottom:12px;text-shadow:0 0 25px currentColor}
+.md{font-size:15px;color:#e2e8f0;max-width:92%;line-height:1.5;margin-bottom:18px}
+.rl{font-size:10px;font-weight:800;color:#fbbf24;text-align:center;letter-spacing:.4px}
+.cov{font-size:12px;text-align:center;margin-bottom:12px;color:#cbd5e1}.cov b{color:#fbbf24}.cov span{display:inline-block;margin:2px;padding:2px 8px;border-radius:10px;border:1px solid #475569}.cov span.ok{border-color:#22c55e;color:#22c55e}
+.srow{display:flex;align-items:center;gap:8px;background:rgba(15,23,42,.9);border:1px solid var(--bd);border-radius:8px;padding:8px;margin-bottom:8px;opacity:0;transform:translateX(-30px)}
+.sp{flex:1;font-size:13px}.sp small{display:block;color:#94a3b8;font-size:10px}.sa{color:#38bdf8;font-weight:900}
+.sr{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end}.rc{border:2px solid;border-radius:6px;padding:3px 7px;font-size:12px;font-weight:900;text-align:center}.rc small{display:block;font-size:8px;font-weight:600;color:#94a3b8}
+.l-m{border-color:#38bdf8}.l-e{border-color:#a855f7}.l-c{border-color:#f59e0b}.l-s{border-color:#10b981}
+#s-beam{position:absolute;left:0;right:0;top:0;height:3px;background:#38bdf8;box-shadow:0 0 14px #38bdf8}
+#casc{display:flex;gap:4px;margin-top:6px;align-items:center;flex-wrap:wrap;justify-content:center;padding:0 8px}.cl{font-size:10px;font-weight:900;color:#10b981}.cb{font-size:10px;font-weight:900;padding:4px 6px;border-radius:6px;border:1px solid #10b981;opacity:.35}.cb.on{opacity:1;background:#065f46}
+.stp{display:flex;gap:4px;justify-content:center;margin-top:5px}.stp span{font-size:10px;font-weight:800;padding:3px 7px;border-radius:10px;border:1px solid #475569;color:#94a3b8}.stp span.on{border-color:#fbbf24;color:#fbbf24}.stp span.done{border-color:#22c55e;color:#22c55e}
+#ea{transition:filter .8s}#ea.unk{filter:brightness(.25) drop-shadow(0 0 18px #64748b)}
+#d-why{font-size:12px;color:#fde68a;margin-top:8px;max-width:340px;line-height:1.4}
+#guide{position:fixed;left:8px;right:8px;bottom:305px;z-index:450;display:none;align-items:flex-end;gap:8px}
+#guide .gb{flex:1;background:#fffbe6;color:#1f2937;border:2px solid #fbbf24;border-radius:14px;padding:8px 12px;font-size:12.5px;line-height:1.4;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.6)}
+#guide small{display:block;font-size:10px;font-weight:900;color:#b45309;margin-bottom:2px}
+#end{justify-content:flex-start;overflow-y:auto;padding-top:max(24px,env(safe-area-inset-top))}#end>*{flex-shrink:0}
+.sum{background:rgba(15,23,42,.95);border:1px solid var(--bd);border-radius:10px;padding:12px;max-width:440px;width:100%;text-align:left;font-size:12px;line-height:1.45;margin-bottom:16px}.sum h4{color:var(--ac);margin-bottom:8px;font-size:14px}.sum .sb{margin-bottom:9px}.sum ul{padding-left:16px}.sum li{margin-bottom:3px}.sum .ok{color:#22c55e}.sum .no{color:#ef4444}
+#sigp{display:none;gap:6px;margin-top:6px;padding:0 8px;align-items:stretch;justify-content:center;flex-wrap:wrap}
+.sg{background:rgba(15,23,42,.9);border:1px solid #6b21a8;border-radius:8px;padding:4px 7px;min-width:96px}.sgl{font-size:10px;font-weight:800;margin-bottom:3px}.sgb{height:6px;background:#334155;border-radius:3px;overflow:hidden}.sgb i{display:block;height:100%;background:#a855f7;transition:width .5s}
+.sg.full{border-color:#22c55e}.sg.full .sgb i{background:#22c55e}.sgt{align-self:center;font-size:11px;font-weight:900;color:#d8b4fe}
+#sigp.ready .sg{animation:pp 1s infinite}@keyframes pp{50%{transform:scale(1.1);box-shadow:0 0 14px #22c55e}}
+.mb{display:flex;align-items:center;gap:8px;font-size:11px;margin-bottom:5px}.mb span{width:125px}.mb div{flex:1;height:8px;background:#334155;border-radius:4px;overflow:hidden}.mb i{display:block;height:100%}
+.gh{grid-column:1/-1;margin-top:8px;border-bottom:2px solid var(--bd);padding-bottom:4px}.gh b{color:var(--ac);font-size:13px;text-transform:uppercase}.gh small{display:block;color:#94a3b8;font-size:11px;margin-top:2px}
+#pchips{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-top:5px}.pc{font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px;border:1px solid #64748b;color:#94a3b8;background:rgba(0,0,0,.6)}.pc.on{border-color:#22c55e;color:#22c55e}
+#alarms{width:100%;max-width:360px;margin-top:6px;padding:0 10px}.al{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;margin-bottom:3px}.al span{width:150px;flex-shrink:0}.al div{flex:1;height:7px;background:#334155;border-radius:4px;overflow:hidden}.al i{display:block;height:100%;width:0;transition:width .5s}.aln{font-size:10px;color:#cbd5e1;text-align:center}
+.hx,.trp{position:fixed;width:16px;height:16px;z-index:700;pointer-events:none}.hx{background:#f59e0b;clip-path:polygon(25% 5%,75% 5%,100% 50%,75% 95%,25% 95%,0 50%)}.trp{background:#ef4444;clip-path:polygon(50% 0,100% 100%,0 100%)}
+.srow{border-left:4px solid #ef4444}
+</style></head><body>
+<div id="app">
+<div id="intro" class="screen active" style="z-index:10;padding:28px;justify-content:center;align-items:center;text-align:center">
+ <h1 style="color:var(--ac);font-size:32px;font-weight:900;margin-bottom:16px;text-transform:uppercase">InmunoDeck</h1>
+ <div style="background:rgba(15,23,42,.9);border:2px solid var(--bd);padding:18px;border-radius:10px;font-size:15px;color:#cbd5e1;line-height:1.55;max-width:500px;text-align:left;margin-bottom:24px">
+ <p><b>Misión:</b> elimina al patógeno antes de que el hospedero llegue a 0 HP.</p><br>
+ <p><b>Reclutamiento:</b> elige 5 efectores. Cada uno muestra sus receptores (PRR). Si un receptor reconoce un PAMP del patógeno, ¡hay <b>crítico ×1.75</b>!</p><br>
+ <p><b>Reconocimiento:</b> el escáner te muestra la firma molecular del patógeno, pero tu sistema inmune aún no la ha detectado. Hasta que una centinela 👁 con receptor compatible active la alarma, tus ataques hacen ×0.5. Cada PAMP detectado se marca ✔ y se reclutan las células adecuadas (cuestan menos).</p><br><p><b>Proliferación:</b> el patógeno crece cada turno y su ataque aumenta. ¡Es una carrera!</p><br>
+ <p><b>Evasión:</b> el patógeno se protege (daño ×0.5) hasta que uses la carta que rompe su defensa.</p><br>
+ <p><b>Turno:</b> usa ⚡ATP. Cada carta se juega <b>una vez por turno</b>. Cada ataque enemigo libera DAMPs que potencian tu daño.</p></div>
+ <button class="btn" style="max-width:300px" onclick="closeIntro()">INICIAR SIMULACIÓN</button></div>
+
+<div id="breach" class="screen" style="z-index:9;background:var(--bg);padding:12px;align-items:center;overflow-y:auto">
+ <div style="display:flex;justify-content:space-between;align-items:center;width:100%;max-width:560px"><div class="dt">La brecha</div><button class="bturn" style="padding:6px 12px;font-size:12px;background:#475569;box-shadow:0 3px 0 #1e293b" onclick="toScan()">Omitir ▶</button></div>
+ <div style="display:flex;gap:14px;font-size:12px;margin:6px 0;flex-wrap:wrap;justify-content:center"><span><b style="color:#ef4444">▲ PAMP</b>: del invasor</span><span><b style="color:#f59e0b">⬢ DAMP</b>: de mi tejido dañado</span></div>
+ <svg id="bsvg" viewBox="0 0 360 330" style="width:100%;max-width:560px;max-height:56vh;background:rgba(15,23,42,.8);border:1px solid var(--bd);border-radius:10px;touch-action:manipulation"></svg>
+ <div id="b-cap" class="pv" style="text-align:center;min-height:62px;max-width:520px;margin:8px 0;font-size:13px"></div>
+ <div id="b-cmp" style="display:none;gap:10px;max-width:560px;width:100%">
+  <div style="flex:1;background:rgba(245,158,11,.12);border:2px solid #f59e0b;border-radius:10px;padding:8px;font-size:12px;line-height:1.45"><b style="color:#f59e0b">⬢ DAMP</b> (daño)<br>Viene de <b>mi tejido dañado</b>.<br>Dice: <i>hay daño</i>.<br>Lo produce cualquier lesión, incluso sin microbio.<br>➔ <b>Alarma general</b> (inflamación).</div>
+  <div style="flex:1;background:rgba(239,68,68,.12);border:2px solid #ef4444;border-radius:10px;padding:8px;font-size:12px;line-height:1.45"><b style="color:#ef4444">▲ PAMP</b> (patógeno)<br>Viene del <b>invasor</b>.<br>Dice: <i>es un microbio</i> (y de qué tipo).<br>Lo detecta un PRR como el TLR.<br>➔ <b>Alarma específica</b> (respuesta dirigida).</div></div>
+ <div id="b-lab" style="display:none;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px">
+  <button class="bturn" style="background:#0e7490;box-shadow:0 4px 0 #164e63" onclick="toZoom()">🔬 Ver la escena molecular (patógeno → centinela)</button>
+  <button class="bturn" style="background:#b45309;box-shadow:0 4px 0 #78350f" onclick="labExp('D')">🧪 Solo golpe (sin microbio)</button>
+  <button class="bturn" style="background:#b91c1c;box-shadow:0 4px 0 #7f1d1d" onclick="labExp('P')">🧪 Solo microbio (sin daño)</button>
+  <button class="btn" style="max-width:320px" onclick="toScan()">Continuar al laboratorio ▶</button></div></div>
+<div id="zoom" class="screen" style="z-index:9;background:radial-gradient(circle at 50% 40%,#0b2540,#050b14);padding:12px;align-items:center;overflow-y:auto">
+ <div style="display:flex;justify-content:space-between;align-items:center;width:100%;max-width:640px"><div class="dt">🔬 Escena molecular</div><button class="bturn" style="padding:6px 12px;font-size:12px;background:#475569;box-shadow:0 3px 0 #1e293b" onclick="toHub()">Volver ▶</button></div>
+ <svg id="zsvg" viewBox="0 0 360 300" style="width:100%;max-width:640px;max-height:64vh"></svg>
+ <div id="z-info" style="display:none;max-width:580px;width:100%;background:rgba(15,23,42,.92);border:2px solid #38bdf8;border-radius:10px;padding:8px 12px;font-size:12.5px;line-height:1.5;margin-top:6px"></div>
+ <div id="z-cap" class="pv" style="text-align:center;min-height:70px;max-width:580px;margin:6px 0;font-size:13px"></div>
+ <button id="z-go" class="btn" style="max-width:340px" onclick="zAct()">▶ Lanzar el microbio</button></div>
+<div id="scan" class="screen" style="z-index:9;background:var(--bg);padding:16px;align-items:center;overflow-y:auto">
+ <div class="dt" id="s-title"></div><div id="s-sub" class="pv" style="text-align:center;margin:6px 0;max-width:460px"></div>
+ <div style="position:relative;width:190px;height:190px;margin:8px 0;flex-shrink:0"><div id="s-img" style="width:100%;height:100%;background-size:contain;background-position:center;background-repeat:no-repeat"></div><div id="s-beam"></div></div>
+ <div id="s-name" class="pn" style="text-align:center;margin-bottom:10px"></div><div id="s-rows" style="width:100%;max-width:460px"></div>
+ <button id="s-go" class="btn" onclick="toDraft()">Elegir defensas</button></div>
+<div id="draft" class="screen">
+ <div class="dh"><div class="dt" id="d-tissue"></div>
+ <div class="intel"><div id="d-img"></div><div><div class="pn">🚨 <span id="d-name"></span></div><div class="pv" id="d-vuln"></div><div class="pe" id="d-evade"></div></div></div></div>
+ <div class="db"><div style="font-size:13px;color:#94a3b8;margin-bottom:10px;font-weight:700;text-align:center">Ensambla tu respuesta (<span id="d-count">0</span>/5)</div><div id="cov" class="cov"></div><div class="grid" id="grid"></div></div>
+ <div class="df"><button id="go" class="btn" disabled onclick="startBattle()">Desplegar Defensas</button></div></div>
+
+<div id="battle" class="screen"><div id="bo"></div>
+ <div id="dock" onclick="skipDock()">
+  <svg viewBox="0 0 320 180" style="width:100%;max-width:420px;overflow:visible">
+   <defs><filter id="gc" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
+   <g id="rec"><path d="M0,-45 C40,-45 55,-20 55,0 C55,20 40,45 0,45 C20,25 20,-25 0,-45Z" fill="rgba(2,132,199,.3)" stroke="#38bdf8" stroke-width="3" filter="url(#gc)"/><line x1="12" y1="-30" x2="35" y2="-25" stroke="#38bdf8" stroke-width="2"/><line x1="20" y1="0" x2="45" y2="0" stroke="#38bdf8" stroke-width="2"/><line x1="12" y1="30" x2="35" y2="25" stroke="#38bdf8" stroke-width="2"/><text id="t-r" x="14" y="4" fill="#fff" font-size="10" font-weight="900" text-anchor="middle"></text></g>
+   <g id="lig"><path d="M-25,-25 L15,-20 L25,0 L15,20 L -25,25 L-10,0Z" fill="rgba(220,38,38,.35)" stroke="#ef4444" stroke-width="3" filter="url(#gc)"/><text id="t-l" x="4" y="4" fill="#fff" font-size="10" font-weight="900" text-anchor="middle"></text></g>
+   <g id="burst"></g></svg>
+  <div style="font-size:11px;font-weight:800;color:#94a3b8;letter-spacing:2px">RECONOCIMIENTO MOLECULAR</div>
+  <div id="d-title" style="font-size:20px;font-weight:900;color:#38bdf8;margin-top:4px;text-shadow:0 0 12px #38bdf8"></div>
+  <div id="d-why"></div><div id="d-casc" style="font-size:12px;font-weight:700;color:#22c55e;margin-top:8px;min-height:34px;max-width:340px;line-height:1.4"></div>
+  <div style="font-size:10px;color:#64748b;margin-top:6px">toca para saltar</div></div>
+ <div class="bui">
+  <div class="top"><div class="et" id="env"></div>
+   <div class="bars"><div class="bw"><div class="bl" style="color:var(--ok)">Hospedero</div><div class="bb"><div id="pb" class="bf"></div><div id="pt" class="bt"></div></div></div>
+   <div class="bw"><div class="bl" id="en" style="color:var(--dg);text-align:right"></div><div class="bb" style="display:flex"><div id="eb" class="bf"></div><div id="et2" class="bt"></div></div></div></div>
+   <div id="flags"></div><div id="steps" class="stp"></div></div>
+  <div class="arena"><div id="ea"></div><div id="intent"></div><div id="pchips"></div><div id="alarms"><div class="al"><span>▲ Alarma específica (PAMP)</span><div><i id="al-p" style="background:#ef4444"></i></div></div><div class="al"><span>⬢ Alarma por daño (DAMP)</span><div><i id="al-d" style="background:#f59e0b"></i></div></div><div id="al-n" class="aln"></div></div><div id="casc"></div><div id="sigp"></div></div>
+  <div class="bot"><div class="ctl"><div class="atp">⚡ ATP: <span id="atp">4</span></div><button id="endt" class="bturn" onclick="enemyTurn()">Pasar Turno</button></div><div class="hand" id="hand"></div></div></div></div>
+
+<div id="guide" onclick="gNext()"><div style="font-size:38px">🔬</div><div class="gb"><small>DRA. INMUNA · toca para seguir</small><div id="g-txt"></div></div></div>
+<div id="ann" class="ann"></div>
+<div id="end" class="modal"><div id="end-t" class="mt"></div><div id="end-d" class="md"></div><div id="end-s"></div><div id="end-v"></div><button id="end-btn" class="bturn" style="padding:14px 28px;font-size:17px" onclick="endNext()">SIGUIENTE ▶</button></div>
+</div>
+<script>
+const $=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
+const IMG={neutrofilo:'neutrofilo.jpg',macrofago1:'macrofago1.jpg',macrofago2:'macrofago2.jpg',nk:'nk.jpg',bgPiel:'piel.jpg',bgMucosa:'epiteliomucoso.jpg',bgGalt:'mucosa.jpg',bact:'bacteria.png',virus:'virus.gif',helm:'helminto.PNG',eosinofilo:'eosinofilo.jpg',complemento:'complemento.jpg.jpg',interferon:'interferon.jpg',dendritica:'celula_dentritica.jpg',mastocito:'mastocito.jpg'};
+
+// Tabla molecular: receptor -> PAMPs/ligandos que reconoce
+const RULES={TLR4:['LPS'],TLR2:['PGN','LTA','BGLUCAN'],TLR3:['ARNbc'],TLR7:['ARNmc'],NOD2:['PGN'],Dectin1:['BGLUCAN'],KIR:['MHC-I↓'],'FcεR':['IgE-Ag'],C3:['LPS','PGN'],TLR5:['FLAGELINA'],'RIG-I':['ARNmc','ARNbc'],MDA5:['ARNbc'],ST2:['Alarminas'],CD206:['Glicanos']};
+// Vía de señalización mostrada tras el acople
+const CASC={TLR4:'TIRAP/MyD88 → NF-κB → TNF · IL-1 · IL-6',TLR2:'MyD88 → NF-κB → citoquinas proinflamatorias',TLR3:'TRIF → IRF3 → IFN-β',TLR7:'MyD88 → IRF7 → IFN-α',NOD2:'RIPK2 → NF-κB → defensinas',Dectin1:'Syk → CARD9 → NF-κB · ROS',KIR:'Sin señal inhibidora (missing self) → perforina + granzima',
+'FcεR':'IgE entrecruzada → degranulación (histamina, MBP)',C3:'C3b depositado → opsonización + MAC',TLR5:'MyD88 → NF-κB → IL-8 (recluta neutrófilos)','RIG-I':'MAVS → IRF3/7 → IFN-α/β',MDA5:'MAVS → IRF3/7 → IFN-α/β',ST2:'IL-33 → ST2 → degranulación · IL-5 activa eosinófilos',CD206:'Lectina tipo C → fagocitosis y perfil reparador (Th2)'};
+
+const SC=[
+{name:'Epidermis (herida)',enemy:'Staphylococcus aureus',type:'Bacteria Gram+',hp:420,atk:16,pamps:['PGN','LTA'],bg:IMG.bgPiel,av:IMG.bact,vuln:'PAMPs: PGN, LTA → TLR2, NOD2.',video:'macrofago_patogeno.mp4',ev:{n:'Cápsula y proteína A',br:['comp','paneth'],d:'Evita la fagocitosis. Rómpela con Complemento o defensinas.'}},
+{name:'Mucosa intestinal (lumen)',enemy:'E. coli enteropatógena',type:'Bacteria Gram-',hp:460,atk:15,pamps:['LPS','FLAGELINA'],bg:IMG.bgGalt,av:IMG.bact,vuln:'PAMPs: LPS (TLR4), flagelina (TLR5). Opsonización C3b.',video:'macrofago_patogeno.mp4',ev:{n:'Biofilm',br:['comp'],d:'Matriz que protege. Opsoniza con Complemento.'}},
+{name:'Mucosa intestinal (helmintos)',enemy:'Helminto parásito',type:'Helminto',hp:520,atk:17,pamps:['Glicanos','Alarminas'],bg:IMG.bgGalt,av:IMG.helm,vuln:'Muy grande para fagocitar. Detectado por alarminas (IL-33/TSLP) y glicanos, sin IgE. Letal: Eosinófilos.',video:'video_helminto.mp4',cont:true,ev:{n:'Tegumento grueso',br:['masto'],d:'La histamina aumenta permeabilidad y recluta eosinófilos.'}},
+{name:'Alvéolo pulmonar',enemy:'Virus ARN (Influenza)',type:'Virus',hp:340,atk:22,pamps:['ARNbc','ARNmc','MHC-I↓'],bg:IMG.bgMucosa,av:IMG.virus,vuln:'ARN viral: TLR3/7 (endosoma), RIG-I/MDA5 (citosol). Baja MHC-I: señal de peligro para la NK (missing self).',video:'video_macrofago_virus_celula_infectada.mp4',ev:{n:'Replicación intracelular',br:['nk','ifn'],d:'Oculto en la célula. NK (missing self) o IFN α/β lo exponen.'}},
+{name:'Mucosa (candidiasis)',enemy:'Candida albicans',type:'Hongo',hp:440,atk:15,pamps:['BGLUCAN'],bg:IMG.bgMucosa,av:IMG.bact,vuln:'PAMP: β-glucano → Dectin-1, TLR2.',video:'macrofago_patogeno.mp4',ev:{n:'Hifas y biofilm',br:['neutro'],d:'Los neutrófilos las destruyen (NETosis).'}},
+{name:'Sinusoides esplénicos (sepsis)',enemy:'Sepsis Gram-',type:'Bacteria Gram-',hp:600,atk:20,pamps:['LPS'],bg:IMG.bgPiel,av:IMG.bact,vuln:'Infección intravascular. LPS → TLR4.',video:'macrofago_patogeno.mp4',cont:true,ev:{n:'Cápsula',br:['comp'],d:'Lisis por MAC y opsonización con Complemento.'}}];
+
+const CARDS=[
+{id:'neutro',name:'Neutrófilo',cat:'cell',cost:1,type:'atk',val:30,prrs:['TLR2','TLR4','TLR5','Dectin1'],img:IMG.neutrofilo,m:'Daño 30. Fagocito: opsonizado cuesta 0 y ×2.'},
+{id:'macroM1',name:'Macrófago M1',cat:'cell',cost:2,type:'atk',val:50,prrs:['TLR4','TLR2','Dectin1','NLRP3','RIG-I'],img:IMG.macrofago1,m:'Daño 50. Con DAMPs≥2: inflamasoma NLRP3 +15.'},
+{id:'macroM2',name:'Macrófago M2',cat:'cell',cost:2,type:'heal',val:40,prrs:['CD206'],img:IMG.macrofago2,m:'Repara +40 HP y baja 2 niveles de DAMPs.'},
+{id:'nk',name:'Célula NK',cat:'cell',cost:2,type:'atk',val:40,prrs:['KIR'],img:IMG.nk,m:'Daño 40. Missing self: crítico vs virus.'},
+{id:'eosino',name:'Eosinófilo',cat:'cell',cost:2,type:'atk',val:25,prrs:['ST2'],img:IMG.eosinofilo,m:'Daño 25. Activado por IL-5/IL-33 (ST2). Letal ×2 vs helmintos (MBP).'},
+{id:'paneth',name:'C. de Paneth',cat:'cell',cost:1,type:'atk',val:25,prrs:['NOD2'],img:IMG.neutrofilo,m:'Defensinas: daño 25. Perfora cápsulas bacterianas.'},
+{id:'masto',name:'Histamina (Mastocito)',cat:'vaso',cost:1,type:'stun',prrs:['ST2'],img:IMG.mastocito,m:'Histamina: aturde 1 turno (2 si hay alarminas IL-33).'},
+{id:'comp',name:'Complemento',cat:'sol',cost:1,type:'casc',prrs:['C3'],img:IMG.complemento,m:'Inicia la cascada: +1 bloque por turno hasta el MAC. Rompe cápsulas.'},
+{id:'ifn',name:'Interferón α/β',cat:'sol',cost:1,type:'shield',prrs:[],img:IMG.interferon,m:'Escudo antiviral: −50% al ataque de virus (−25% a otros).'},
+{id:'dendro',name:'C. Dendrítica',cat:'cell',cost:3,type:'apc',prrs:['TLR3','TLR4','TLR2','TLR7','RIG-I'],img:IMG.dendritica,m:'Puente adaptativo: madura en ~4 turnos. Necesita 3 señales: antígeno, coestimulación (PRR) y citoquinas.'},
+{id:'lang',name:'C. Langerhans',cat:'cell',cost:1,type:'atp',prrs:['TLR2'],img:IMG.dendritica,m:'Centinela: +1 ATP (+2 si reconoce).'}];
+
+let sc,deck=[],hp=120,MHP=120,eHp,eMax,atp=4,MATP=4,turn='PLAYER',busy=false,used=new Set(),
+ ops=0,shield=false,stun=0,evaded=true,apc=-1,det=new Set(),EV=[],miss=new Set(),maxCyt=0,dcUsed=false,sigRes=null,cyt=0,sig2=false,adOK=false,load=1,recog=false,recT=0,turnN=0,evT=0,ifn=false,casc=-1,cbonus=0,damps=0,tl=null,log={};
+
+function closeIntro(){sc=SC[Math.floor(Math.random()*SC.length)];$('intro').classList.remove('active');$('breach').classList.add('active');runBreach()}
+function toScan(){if(bTL)bTL.kill();zk();$('zoom').classList.remove('active');$('breach').classList.remove('active');$('scan').classList.add('active');runScan()}
+function toDraft(){$('scan').classList.remove('active');$('draft').classList.add('active');initDraft()}
+function chips(c){return c.prrs.length?`<div class="prr">${c.prrs.map(r=>`<span>${r}</span>`).join('')}</div>`:''}
+const SENT=['lang','dendro','macroM1','macroM2','masto'],REC={'Bacteria Gram+':['neutro','macroM1','paneth'],'Bacteria Gram-':['neutro','macroM1','comp'],Virus:['nk','macroM1'],Hongo:['neutro'],Helminto:['eosino']},GR={'Bacteria Gram+':.12,'Bacteria Gram-':.12,Virus:.15,Hongo:.06,Helminto:0};
+const cst=c=>(ops&&(c.id==='neutro'||c.id==='macroM1'))?0:Math.max(0,c.cost-(recT>0&&REC[sc.type].includes(c.id)?1:0));
+const ev=t=>EV.push(`Turno ${turnN+1} · ${t}`),ifnF=()=>sc.type==='Virus'?.5:.75;
+const WHY={TLR4:'Toda bacteria Gram- tiene LPS y tus células no: es una firma confiable de "no-propio".',TLR2:'El peptidoglicano y el LTA solo existen en paredes microbianas.',TLR3:'El ARN bicatenario aparece cuando un virus se replica; una célula sana casi no lo tiene.',TLR7:'El ARN monocatenario viral se detecta dentro del endosoma.',NOD2:'NOD2 vigila el citosol: detecta fragmentos de peptidoglicano que lograron entrar.',Dectin1:'El β-glucano forma la pared del hongo y no existe en células humanas.',KIR:'La célula infectada baja su MHC-I; sin la señal "soy propio", la NK ataca (missing self).','FcεR':'El helminto es enorme: se marca con IgE y el eosinófilo lo destruye con su proteína básica.',C3:'C3b se une a superficies microbianas sin protección y las marca para destruirlas.',TLR5:'Solo las bacterias flageladas tienen flagelina; TLR5 la detecta en la membrana.','RIG-I':'Detecta ARN viral en el citosol, donde una célula sana no tiene ARN con esas marcas.',MDA5:'Detecta ARN bicatenario largo del virus en el citosol.',ST2:'El epitelio dañado por el helminto libera IL-33 (alarmina): activa ILC2, mastocitos y eosinófilos sin necesidad de IgE.',CD206:'Los glicanos del parásito son reconocidos por lectinas tipo C como el receptor de manosa.'};
+function rsteps(){const st=!recog?0:(recT>0?2:3);
+ $('steps').innerHTML=['① Detectar','② Alertar','③ Reclutar','④ Eliminar'].map((t,i)=>`<span class="${i<st?'done':i===st?'on':''}">${t}</span>`).join('');
+ $('en').innerText=sc.enemy;$('al-p').style.width=Math.round(det.size/sc.pamps.length*100)+'%';$('al-d').style.width=Math.round(Math.min(1,damps/3)*100)+'%';$('al-n').innerText=det.size?'Respuesta dirigida: críticos, reclutamiento y citoquinas orientadas.':recog?'Alarma genérica por daño: inflamación sin dirección.':'Aún sin alarma: el hospedero no ha detectado nada.';$('pchips').innerHTML=sc.pamps.map(p=>`<span class="pc ${det.has(p)?'on':''}">▲ ${det.has(p)?'✔ detectado':'🔒 sin detectar'}: ${p}</span>`).join('');
+ if(load>1.001)$('flags').insertAdjacentHTML('afterbegin',`<span class="flag" style="background:#7f1d1d">🦠 Carga ${Math.round(load*100)}%</span>`)}
+const PAMP={LPS:{n:'LPS',s:'Endotoxina · membrana externa Gram-'},PGN:{n:'Peptidoglicano',s:'Pared celular bacteriana'},LTA:{n:'Ác. lipoteicoico',s:'Pared Gram+'},BGLUCAN:{n:'β-glucano',s:'Pared del hongo'},ARNbc:{n:'ARN bicatenario',s:'Replicación viral'},ARNmc:{n:'ARN monocatenario',s:'Genoma viral'},'MHC-I↓':{n:'Señal de peligro: MHC-I↓ / ligandos de estrés',s:'Missing self + NKG2D (no es un PAMP)'},Glicanos:{n:'Glicanos del parásito',s:'Reconocidos por lectinas tipo C (CD206)'},Alarminas:{n:'Alarminas IL-25/IL-33/TSLP',s:'Liberadas por el epitelio dañado (activan ILC2)'},FLAGELINA:{n:'Flagelina',s:'Flagelo bacteriano'}};
+const LOC={TLR4:['m','Membrana'],TLR2:['m','Membrana'],TLR3:['e','Endosoma'],TLR7:['e','Endosoma'],NOD2:['c','Citosol'],Dectin1:['m','Membrana'],KIR:['m','Membrana NK'],'FcεR':['m','Membrana'],C3:['s','Soluble'],TLR5:['m','Membrana'],'RIG-I':['c','Citosol'],MDA5:['c','Citosol'],ST2:['m','Membrana'],CD206:['m','Membrana']};
+const ROL={atk:'EFECTOR',heal:'MEDIADOR',stun:'MEDIADOR',casc:'MEDIADOR',shield:'MEDIADOR',apc:'RECONOCIMIENTO',atp:'RECONOCIMIENTO'};
+const STAT={atk:c=>`⚔ ${c.val}`,heal:c=>`✚ ${c.val}`,stun:()=>'😵 aturde',casc:()=>'🧬 cascada',shield:()=>'🛡 antiviral',apc:()=>'🧬 3 señales',atp:()=>'⚡ +1'};
+const rl=c=>`${SENT.includes(c.id)?'👁 ':''}${ROL[c.type]} · ${STAT[c.type](c)}`;
+function rsig(){const e=$('sigp');if(apc<=0){e.style.display='none';return}
+ const c3=Math.min(1,cyt/4),sg=[['① Antígeno',1],['② Coestimulación',sig2?1:0],['③ Citoquinas',c3]],all=sg.every(x=>x[1]>=1);
+ e.style.display='flex';e.classList.toggle('ready',all);
+ e.innerHTML=sg.map(([t,v])=>`<div class="sg ${v>=1?'full':''}"><div class="sgl">${t} ${v>=1?'✔':Math.round(v*100)+'%'}</div><div class="sgb"><i style="width:${v*100}%"></i></div></div>`).join('')+`<div class="sgt">${all?'⚡ ¡Listas!':'madura en '+apc+'t'}</div>`}
+const GRP=[['Mieloides','Derivan del progenitor mieloide: fagocitos y granulocitos. Todos son leucocitos, pero NO son linfocitos.',['neutro','macroM1','macroM2','dendro','lang','eosino','masto']],['Linfoide innata','La NK es el único linfocito de tu mazo (T y B son de la adaptativa).',['nk']],['Barrera epitelial','No es un leucocito: el epitelio también defiende (defensinas).',['paneth']],['Solubles','Proteínas del plasma, no células.',['comp','ifn']]];
+function cov(){const cs=sc.pamps.map(p=>[p,deck.some(c=>c.prrs.some(r=>(RULES[r]||[]).includes(p)))]);
+ $('cov').innerHTML=`Cobertura molecular: <b>${cs.filter(x=>x[1]).length}/${cs.length}</b> `+cs.map(([p,o])=>`<span class="${o?'ok':''}">${p} ${o?'✔':'✖'}</span>`).join('')}
+function puff(cls,x,y,t){if(!window.gsap)return;const r=(t.parentElement||t).getBoundingClientRect(),tx=r.left+r.width/2,ty=r.top+r.height/2;
+ for(let i=0;i<6;i++){const e=document.createElement('div');e.className=cls;e.style.left=x-8+'px';e.style.top=y-8+'px';document.body.appendChild(e);
+  gsap.to(e,{x:tx-x+(Math.random()*40-20),y:ty-y+(Math.random()*20-10),rotation:Math.random()*360,opacity:.2,duration:.9+Math.random()*.4,delay:i*.06,ease:'power2.in',onComplete:()=>e.remove()})}}
+let bStep=0,bHint=false,bSeen=new Set(),bPG=null,bCY=124,bX=110,bTis=[],bHit=null;
+const NSE=(n,at)=>{const e=document.createElementNS(NS,n);for(const k in at)e.setAttribute(k,at[k]);return e};
+const HX='-8,0 -4,-7 4,-7 8,0 4,7 -4,7',TR='0,-8 8,7 -8,7',LS={LPS:'LPS',PGN:'Peptidoglicano',LTA:'Ác. lipoteicoico',BGLUCAN:'β-glucano',ARNbc:'ARN bicatenario',ARNmc:'ARN viral',Glicanos:'Glicanos',FLAGELINA:'Flagelina'},LK=[['ATP','HMGB1'],['Ác. úrico','ADN libre']];
+const BX=262,BY=262,BR=42,BPX={gn:105,gp:120,v:120,f:115,h:140},BTY=140;
+const C2='Lo que sale de MIS células dañadas se llama <b style="color:#f59e0b">DAMP ⬢</b> (patrón asociado al daño). Avisa: <i>hay daño</i>… pero no dice quién fue. 👆 Ahora toca al patógeno.',
+ C3='Lo que lleva el INVASOR se llama <b style="color:#ef4444">PAMP ▲</b> (patrón asociado a patógenos). Avisa: <i>esto es un microbio</i>. Compara los dos y prueba qué pasa con solo uno.';
+const bcap=t=>{$('b-cap').innerHTML=t},lbP=()=>{const l=sc.pamps.filter(p=>LS[p]).map(p=>LS[p]).slice(0,3);return l.length?l:['Patrón microbiano']};
+const ptype=()=>sc.type==='Virus'?'v':sc.type==='Hongo'?'f':sc.type==='Helminto'?'h':sc.type==='Bacteria Gram+'?'gp':'gn';
+function hint(x,y){const h=$('bhint');if(x==null){h.style.display='none';return}h.style.display='block';if(window.gsap)gsap.set(h,{x,y})}
+function emit(kind,x,y,labels,done){const col=kind==='D'?'#f59e0b':'#ef4444';
+ labels.forEach((lb,i)=>{const g=NSE('g',{}),t=NSE('text',{y:-13,'text-anchor':'middle','font-size':9,fill:col,'font-weight':900});t.textContent=lb;
+  g.appendChild(NSE('circle',{r:11,fill:col,opacity:.2,class:'gl'}));g.appendChild(NSE('polygon',{points:kind==='D'?HX:TR,fill:col,class:'sh'}));g.appendChild(t);$('bpar').appendChild(g);
+  g.setAttribute('transform',`translate(${x},${y})`);gsap.from(g,{opacity:0,duration:.4,delay:i*.3});
+  zT.push(gsap.delayedCall(i*.3+.5,()=>orgFly(g,[x,y],[BX-12+Math.random()*24,BY-BR-14+Math.random()*8],2.2,()=>{gsap.to(g,{opacity:0,duration:.2,onComplete:()=>{g.remove();if(i===labels.length-1&&done)done()}})},12)))})}
+function alarm(kind){const col=kind==='D'?'#f59e0b':'#ef4444',S=$('bsvg'),b=$('bbadge'),r=NSE('circle',{cx:BX,cy:BY,r:BR,fill:'none',stroke:col,'stroke-width':3});S.appendChild(r);gsap.to(r,{attr:{r:BR+50},opacity:0,duration:1,onComplete:()=>r.remove()});
+ b.textContent=kind==='D'?'🔔 ALARMA GENERAL':'🎯 ALARMA ESPECÍFICA';b.setAttribute('fill',col);gsap.fromTo(b,{opacity:0},{opacity:1,duration:.4})}
+function bBuild(){const S=$('bsvg');S.innerHTML='';
+ const sg=NSE('g',{});S.appendChild(sg);sg.appendChild(NSE('circle',{cx:BX,cy:BY,r:BR-4,fill:'rgba(14,116,144,.22)'}));
+ dots(sg,circ(BR,44).map(q=>[q[0]+BX,q[1]+BY]),2.6,'#7dd3fc');dots(sg,circ(BR-7,36).map(q=>[q[0]+BX,q[1]+BY]),2.2,'#0e7490');
+ sg.appendChild(NSE('circle',{cx:BX+4,cy:BY+4,r:15,fill:'#312e81',stroke:'#818cf8','stroke-width':1.5}));
+ [-125,-90,-55].forEach((a,i)=>{const t=a*Math.PI/180,d=NSE('g',{transform:`translate(${BX+BR*Math.cos(t)},${BY+BR*Math.sin(t)}) rotate(${a+90}) scale(.7)`});[-7,7].forEach(dx=>{const h=NSE('g',{transform:`translate(${dx},0)`});h.appendChild(Yg(['#38bdf8','#22c55e','#fb923c'][i]));d.appendChild(h)});sg.appendChild(d)});
+ const sl=NSE('text',{x:BX-BR-8,y:BY+4,'text-anchor':'end','font-size':8,fill:'#94a3b8'});sl.textContent='célula centinela';S.appendChild(sl);
+ S.appendChild(NSE('rect',{x:0,y:BTY,width:360,height:56,fill:'rgba(180,99,122,.12)'}));bTis=[];
+ for(let i=0;i<6;i++){const g=NSE('g',{transform:`translate(${33+i*58},${BTY+24})`,style:'cursor:pointer'});g.appendChild(NSE('ellipse',{rx:27,ry:22,fill:'rgba(180,99,122,.4)'}));dots(g,stad(27,22,30),2.5,'#e9a8bd');g.appendChild(NSE('circle',{r:8,fill:'#6b2a45',opacity:.8}));g.appendChild(NSE('circle',{r:26,fill:'transparent',class:'hit'}));S.appendChild(g);bTis.push(g)}
+ const tl=NSE('text',{x:6,y:BTY+58,'font-size':8,fill:'#e9a8bd','font-weight':800});tl.textContent='tejido (epitelio)';S.appendChild(tl);
+ const T=ptype(),r=drawPg(S,T,true);bPG=r.g;bCY=r.cy;bX=BPX[T];bPG.setAttribute('transform',`translate(${bX},60)`);bHit=NSE('circle',{r:60,fill:'transparent',style:'cursor:pointer'});bPG.appendChild(bHit);
+ const bd=NSE('text',{id:'bbadge','text-anchor':'middle',x:BX,y:BY+BR+16,'font-size':10,'font-weight':900,style:'opacity:0'});S.appendChild(bd);
+ S.appendChild(NSE('g',{id:'bpar',style:'pointer-events:none'}));
+ const h=NSE('g',{id:'bhint',style:'display:none;pointer-events:none'});h.appendChild(NSE('circle',{r:28,fill:'none',stroke:'#fff','stroke-width':2,'stroke-dasharray':'5 4'}));const ht=NSE('text',{y:-34,'text-anchor':'middle','font-size':16});ht.textContent='👆';h.appendChild(ht);S.appendChild(h);
+ if(window.gsap)zT.push(gsap.to(h.firstChild,{scale:1.3,transformOrigin:'50% 50%',repeat:-1,yoyo:true,duration:.6}))}
+function runBreach(){zk();bBuild();bStep=0;bSeen=new Set();$('b-cmp').style.display='none';$('b-lab').style.display='none';
+ if(!window.gsap){bcap(C3);$('b-cmp').style.display='flex';$('b-lab').style.display='flex';bStep=3;return}
+ bcap('Un patógeno llega al tejido. 👆 Tócalo para que invada.');hint(bX,60);
+ bHit.onclick=()=>{if(bStep===0)invade();else if(bStep===2)showP()};bTis[1].onclick=()=>leak(0);bTis[2].onclick=()=>leak(1)}
+function invade(){bStep=-1;hint();orgFly(bPG,[bX,60],[bX-4,bCY-28],2.2,()=>{
+ for(let i=0;i<5;i++)zT.push(gsap.delayedCall(i*.2,()=>{const e=NSE('circle',{r:3,fill:'#84cc16',opacity:.9});$('bsvg').appendChild(e);orgFly(e,[bX+Math.random()*30-15,bCY],[60+Math.random()*100,BTY+8],.7,()=>e.remove(),5)}));
+ zT.push(gsap.delayedCall(1.1,()=>{[1,2].forEach(c=>gsap.to(bTis[c].querySelectorAll('circle:not(.hit),ellipse'),{attr:{fill:'#f59e0b'},duration:.4}));bStep=1;bcap('Rompió la barrera y dañó el tejido. 👆 Toca las células dañadas.');hint(91,BTY+24)}))},8)}
+function leak(i){if(bStep!==1||bSeen.has(i))return;bSeen.add(i);const last=bSeen.size===2;gsap.to(bTis[1+i].querySelectorAll('circle:not(.hit),ellipse'),{attr:{fill:'#5b2a1c'},duration:.4});
+ hint(last?null:(i?91:149),BTY+24);bcap('⬢ Esto salió de una célula <b>mía</b> dañada, no del microbio.');if(last)bStep=-1;
+ emit('D',91+58*i,BTY+48,LK[i],()=>{alarm('D');if(last){bcap(C2);bStep=2;hint(bX,bCY-28)}})}
+function showP(){bStep=-1;hint();emit('P',bX,bCY-28,lbP(),()=>{alarm('P');bcap(C3);bStep=3;$('b-cmp').style.display='flex';$('b-lab').style.display='flex'})}
+function labExp(k){if(bStep!==3)return;bStep=-1;$('bbadge').style.opacity=0;
+ emit(k,k==='D'?91:bX,k==='D'?BTY+48:bCY-28,k==='D'?LK[0]:lbP(),()=>{alarm(k);bcap(k==='D'?'Solo golpe: hay DAMPs → <b>alarma general</b> (inflamación), pero el sistema no sabe contra qué actuar. Un golpe estéril también la activa.':'Solo microbio: los PAMPs se acoplan al TLR → <b>alarma específica</b>: la respuesta se dirige contra ese tipo de invasor.');bStep=3})}
+let zT=[],zStage=0,zRec={},zActs=[],zi=0,zVB={x:0,y:0,w:360,h:300},zMem=[],zE2=null;
+const ZC={TLR4:'#38bdf8',TLR2:'#22c55e',TLR5:'#f472b6',Dectin1:'#fb923c',TLR3:'#a855f7',TLR7:'#c084fc',TLR9:'#e879f9'},ZN={Dectin1:'Dectin-1'},CX=180,CY=420,RR=105,EX=136,EY=460,ER=26,PIT=140*Math.PI/180;
+const PT={LPS:'TLR4',PGN:'TLR2',LTA:'TLR2',BGLUCAN:'Dectin1',FLAGELINA:'TLR5',Glicanos:'Dectin1'};
+const INFO={LPS:['LPS (endotoxina)','la membrana externa de bacterias Gram−','TLR4','hay una bacteria Gram negativa'],PGN:['Peptidoglicano','la pared de las bacterias','TLR2','hay una bacteria'],LTA:['Ác. lipoteicoico','la pared de bacterias Gram+','TLR2','hay una bacteria Gram positiva'],BGLUCAN:['β-glucano','la pared de los hongos','Dectin-1','hay un hongo'],FLAGELINA:['Flagelina','el flagelo de bacterias móviles','TLR5','hay una bacteria con flagelo'],Glicanos:['Glicanos','la superficie de parásitos','lectinas tipo C (ej. Dectin-1)','hay un parásito'],HMGB1:['HMGB1','el núcleo de células dañadas (se escapa al romperse)','TLR4','hay daño en el tejido, pero no dice qué lo causó'],HSP70:['HSP70 (proteína de choque térmico)','el interior de células estresadas o dañadas','TLR2','hay estrés o daño celular'],ARNv:['ARN viral','el virus al replicarse','TLR3 (bicatenario) y TLR7 (monocatenario)','hay un virus'],CPG:['ADN microbiano (CpG)','bacterias y otros microbios','TLR9','hay un microbio: su ADN no lleva la marca de las células humanas']};
+const zcap=t=>{$('z-cap').innerHTML=t};
+function zk(){zT.forEach(t=>t.kill());zT=[]}
+function Yg(col){const g=NSE('g',{});g.appendChild(NSE('path',{d:'M0,0 L0,-17 M0,-17 L-7,-29 M0,-17 L7,-29',stroke:col,'stroke-width':3.2,'stroke-linecap':'round',fill:'none'}));[-7,7].forEach(x=>g.appendChild(NSE('circle',{cx:x,cy:-29,r:2.8,fill:col})));return g}
+function orgFly(g,a,b,dur,done,amp){amp=amp==null?12:amp;const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1,nx=-dy/L,ny=dx/L,off=(Math.random()-.5)*L*.45,cx=(a[0]+b[0])/2+nx*off,cy=(a[1]+b[1])/2+ny*off,ph=Math.random()*6,r0=Math.random()*360,o={p:0},sh=g.querySelector('.sh'),gl=g.querySelector('.gl');
+ const t=gsap.to(o,{p:1,duration:dur,ease:'power1.in',onUpdate:()=>{const p=o.p,q=1-p,x=q*q*a[0]+2*q*p*cx+p*p*b[0],y=q*q*a[1]+2*q*p*cy+p*p*b[1],w=Math.sin(p*10+ph)*amp*(1-p)*(.4+p);g.setAttribute('transform',`translate(${x+nx*w},${y+ny*w})`);if(sh)sh.setAttribute('transform',`rotate(${r0+p*380}) scale(${1+.15*Math.sin(p*16+ph)})`);if(gl)gl.setAttribute('r',10+3*Math.sin(p*12+ph))},onComplete:done});zT.push(t);return t}
+function mkP(S,kind,label){const col=kind==='D'?'#f59e0b':'#ef4444',g=NSE('g',{});g.appendChild(NSE('circle',{r:11,fill:col,opacity:.2,class:'gl'}));g.appendChild(NSE('polygon',{points:kind==='D'?HX:TR,fill:col,class:'sh'}));
+ const t=NSE('text',{y:-14,'text-anchor':'middle','font-size':8,fill:kind==='D'?'#fde68a':'#fca5a5','font-weight':900});t.textContent=label;g.appendChild(t);S.appendChild(g);return g}
+function buildZoom(){const S=$('zsvg');S.innerHTML='';zk();zRec={};zMem=[];zVB=Object.assign({},SH1);S.setAttribute('viewBox',`${SH1.x} ${SH1.y} ${SH1.w} ${SH1.h}`);buildTop(S);const add=(n,a)=>{const e=NSE(n,a);S.appendChild(e);return e};
+ add('circle',{cx:CX,cy:CY,r:RR-4,fill:'rgba(14,116,144,.22)'});
+ for(let i=0;i<64;i++){const t=i/64*6.283;[[RR,3.3,'#7dd3fc',0],[RR-9,2.9,'#0e7490',.05]].forEach(([rad,r,f,off])=>{const x=CX+rad*Math.cos(t+off),y=CY+rad*Math.sin(t+off),e=add('circle',{cx:x,cy:y,r,fill:f}),d=Math.abs(Math.atan2(Math.sin(t-PIT),Math.cos(t-PIT)));if(d<.17)zMem.push({e,cx:x,cy:y,d})})}
+ add('circle',{cx:CX+14,cy:CY-8,r:36,fill:'#312e81',stroke:'#818cf8','stroke-width':2});add('text',{x:CX+14,y:CY-5,'text-anchor':'middle','font-size':9,fill:'#c7d2fe','font-weight':800}).textContent='Núcleo';
+ add('ellipse',{cx:CX+60,cy:CY+42,rx:15,ry:7,fill:'#7c2d12',transform:`rotate(-25 ${CX+60} ${CY+42})`});
+ [['NOD2',CX+46,CY+66],['RIG-I',CX+12,CY+70]].forEach(([n,x,y])=>{add('rect',{x:x-14,y:y-8,width:28,height:16,rx:5,fill:'rgba(245,158,11,.18)',stroke:'#f59e0b'});add('text',{x,y:y+3,'text-anchor':'middle','font-size':7.5,fill:'#fde68a','font-weight':800}).textContent=n});
+ add('text',{x:CX+30,y:CY+90,'text-anchor':'middle','font-size':7.5,fill:'#94a3b8'}).textContent='sensores del citosol';
+ zE2=add('circle',{cx:EX,cy:EY,r:ER,fill:'rgba(168,85,247,.15)',stroke:'#a855f7','stroke-width':1.6});add('text',{x:EX,y:EY-ER-4,'text-anchor':'middle','font-size':7.5,fill:'#d8b4fe'}).textContent='endosoma';
+ const mk=(name,loc,x,y,rot,k,tx,ty,lx,ly,fs)=>{const col=ZC[name],d=add('g',{transform:`translate(${x},${y}) rotate(${rot}) scale(${k})`}),ys=[];
+  [-8,8].forEach(dx=>{const h=NSE('g',{transform:`translate(${dx},0)`}),r=NSE('g',{});r.appendChild(Yg(col));h.appendChild(r);d.appendChild(h);ys.push(r)});
+  d.appendChild(NSE('line',{x1:-8,y1:-2,x2:8,y2:-2,stroke:col,'stroke-width':2.4}));
+  const lab=add('text',Object.assign({x:lx,y:ly,'text-anchor':'middle','font-size':fs,fill:col,'font-weight':900},loc==='e'?{opacity:0,class:'zl'}:{}));lab.textContent=ZN[name]||name;
+  const o={a:0},sw=gsap.to(o,{a:4,duration:1.1+Math.random()*.8,yoyo:true,repeat:-1,ease:'sine.inOut',onUpdate:()=>{ys[0].setAttribute('transform',`rotate(${o.a-2})`);ys[1].setAttribute('transform',`rotate(${2-o.a})`)}});zT.push(sw);
+  zRec[name]={loc,ys,sw,tx,ty,lab,col}};
+ if(window.gsap){[['TLR5',-150],['TLR4',-115],['TLR2',-75],['Dectin1',-38]].forEach(([n,a])=>{const t=a*Math.PI/180;mk(n,'m',CX+RR*Math.cos(t),CY+RR*Math.sin(t),a+90,1,CX+(RR+30)*Math.cos(t),CY+(RR+30)*Math.sin(t),CX+(RR+50)*Math.cos(t),CY+(RR+50)*Math.sin(t)+3,9)});
+  [['TLR3',-150],['TLR7',-30],['TLR9',90]].forEach(([n,a])=>{const t=a*Math.PI/180;mk(n,'e',EX+ER*Math.cos(t),EY+ER*Math.sin(t),a-90,.38,EX+(ER-11)*Math.cos(t),EY+(ER-11)*Math.sin(t),EX+(ER+17)*Math.cos(t),EY+(ER+17)*Math.sin(t)+2,5)})}}
+const SH1={x:0,y:0,w:360,h:556},SH2=SH1,TY=170,PXO={gn:150,gp:190,v:190,f:180,h:190};
+let zPG=null,zPM=[],zCY=128,zX=150,zTis=[];
+function zcam(o,d){gsap.to(zVB,{x:o.x,y:o.y,w:o.w,h:o.h,duration:d,ease:'power2.inOut',onUpdate:()=>$('zsvg').setAttribute('viewBox',`${zVB.x} ${zVB.y} ${zVB.w} ${zVB.h}`)})}
+const dots=(g,pts,r,f,o)=>pts.forEach(p=>g.appendChild(NSE('circle',{cx:p[0],cy:p[1],r,fill:f,opacity:o==null?1:o})));
+function stad(hw,hh,n){const Ls=2*(hw-hh),La=Math.PI*hh,P=2*Ls+2*La,o=[];for(let i=0;i<n;i++){const q=i/n*P;let x,y,nx,ny,a;
+ if(q<Ls){x=-hw+hh+q;y=-hh;nx=0;ny=-1}else if(q<Ls+La){a=(q-Ls)/hh-Math.PI/2;x=hw-hh+hh*Math.cos(a);y=hh*Math.sin(a);nx=Math.cos(a);ny=Math.sin(a)}else if(q<2*Ls+La){x=hw-hh-(q-Ls-La);y=hh;nx=0;ny=1}else{a=(q-2*Ls-La)/hh+Math.PI/2;x=-hw+hh+hh*Math.cos(a);y=hh*Math.sin(a);nx=Math.cos(a);ny=Math.sin(a)}o.push([x,y,nx,ny])}return o}
+const circ=(r,n)=>Array.from({length:n},(_,i)=>{const t=i/n*6.283;return[r*Math.cos(t),r*Math.sin(t),Math.cos(t),Math.sin(t)]});
+function lolli(g,p,len,col,tri){const x2=p[0]+p[2]*len,y2=p[1]+p[3]*len;g.appendChild(NSE('line',{x1:p[0],y1:p[1],x2,y2,stroke:col,'stroke-width':1.3}));
+ g.appendChild(tri?NSE('polygon',{points:`${x2},${y2-3.5} ${x2+3.5},${y2+3} ${x2-3.5},${y2+3}`,fill:col,transform:`rotate(${Math.atan2(p[3],p[2])*57.3+90} ${x2} ${y2})`}):NSE('circle',{cx:x2,cy:y2,r:2.6,fill:col}))}
+function drawPg(S,T,noM){const g=NSE('g',{}),A=(n,a)=>{const e=NSE(n,a);g.appendChild(e);return e},M=[];S.appendChild(g);let cy=128;
+ if(T==='gn'){A('rect',{x:-62,y:-26,width:124,height:52,rx:26,fill:'rgba(34,197,94,.16)'});const o=stad(62,26,46);dots(g,o,2.7,'#4ade80');o.forEach((p,i)=>{if(i%2===0)lolli(g,p,9,'#ef4444',true)});
+  dots(g,stad(54,19,40),1.7,'#86efac');dots(g,stad(48,13,34),2.2,'#22c55e');const f=[];for(let i=0;i<24;i++)f.push([62+i*3.6,Math.sin(i*.5)*9,0,0]);dots(g,f,1.9,'#f472b6');
+  M.push({x:-18,y:-36,k:'LPS',p:'LPS',n:'LPS'},{x:30,y:-14,k:'PGN',p:'PGN',n:'Peptidoglicano'},{x:128,y:-6,k:'FLAGELINA',p:'FLAGELINA',n:'Flagelina'});cy=124}
+ else if(T==='gp'){A('circle',{r:34,fill:'rgba(167,139,250,.14)'});[[36,52,'#a78bfa',2.6],[32,48,'#8b5cf6',2.6],[28,44,'#a78bfa',2.4]].forEach(([r,n,f,z])=>dots(g,circ(r,n),z,f));dots(g,circ(23,30),2,'#7c3aed');
+  circ(36,26).forEach(p=>lolli(g,p,9,'#fb923c',false));M.push({x:-6,y:-44,k:'PGN',p:'PGN',n:'Peptidoglicano'},{x:36,y:-36,k:'LTA',p:'LTA',n:'Ác. lipoteicoico'});cy=114}
+ else if(T==='v'){A('circle',{r:32,fill:'rgba(56,189,248,.1)'});dots(g,circ(32,40),2.5,'#38bdf8');
+  circ(32,14).forEach(p=>{A('line',{x1:p[0],y1:p[1],x2:p[0]+p[2]*8,y2:p[1]+p[3]*8,stroke:'#7dd3fc','stroke-width':1.6});[-.5,.5].forEach(s2=>{const a=Math.atan2(p[3],p[2])+s2;A('line',{x1:p[0]+p[2]*8,y1:p[1]+p[3]*8,x2:p[0]+Math.cos(a)*15,y2:p[1]+Math.sin(a)*15,stroke:'#7dd3fc','stroke-width':1.6})})});
+  const hx=[];for(let k=0;k<6;k++){const a=k*1.047,b=(k+1)*1.047;for(let j=0;j<5;j++){const t=j/5;hx.push([20*(Math.cos(a)*(1-t)+Math.cos(b)*t),20*(Math.sin(a)*(1-t)+Math.sin(b)*t),0,0])}}dots(g,hx,1.7,'#94a3b8');
+  const rn=[];for(let i=0;i<22;i++)rn.push([-12+i*1.1,Math.sin(i*.9)*5+4,0,0]);dots(g,rn,1.9,'#ef4444');M.push({x:2,y:8,k:'ARNv',p:'ARN',n:'ARN viral'});cy=118}
+ else if(T==='f'){A('ellipse',{rx:40,ry:30,fill:'rgba(251,146,60,.14)'});const o=stad(44,32,50);dots(g,o,2.8,'#fb923c');dots(g,stad(38,26,42),2.4,'#fdba74');dots(g,circ(10,14),2,'#312e81');
+  o.forEach((p,i)=>{if(i%3===0)A('path',{d:`M${p[0]},${p[1]} q${p[2]*5+p[3]*3},${p[3]*5-p[2]*3} ${p[2]*10},${p[3]*10}`,stroke:'#fde68a','stroke-width':1.3,fill:'none'})});
+  dots(g,circ(14,18).map(p=>[p[0]+46,p[1]-22,0,0]),2.4,'#fb923c');M.push({x:-30,y:-44,k:'BGLUCAN',p:'BGLUCAN',n:'β-glucano'});cy=126}
+ else{A('rect',{x:-100,y:-14,width:200,height:28,rx:14,fill:'rgba(252,211,77,.16)'});const o=stad(100,14,70);dots(g,o,2.5,'#fcd34d');dots(g,stad(94,9,60),1.7,'#d97706');
+  o.forEach((p,i)=>{if(i%3===0&&p[3]<-.5)A('path',{d:`M${p[0]},${p[1]} q3,-6 0,-10`,stroke:'#fde68a','stroke-width':1.3,fill:'none'})});
+  for(let i=0;i<9;i++)A('line',{x1:-80+i*20,y1:-8,x2:-80+i*20,y2:8,stroke:'#b45309','stroke-width':1.2,opacity:.6});M.push({x:-20,y:-30,k:'Glicanos',p:'Glicanos',n:'Glicanos'});cy=146}
+ let ms=M.filter(m=>sc.pamps.some(q=>m.p===q||(m.p==='ARN'&&q.indexOf('ARN')===0)));if(!ms.length)ms=M.slice(0,1);
+ if(!noM)ms.forEach(m=>{const e=A('g',{transform:`translate(${m.x},${m.y})`,style:'cursor:pointer'});e.appendChild(NSE('circle',{r:9,fill:'rgba(239,68,68,.3)',stroke:'#ef4444','stroke-width':2}));const t=NSE('text',{y:3.5,'text-anchor':'middle','font-size':10,fill:'#fff'});t.textContent='▲';e.appendChild(t);
+  const l=NSE('text',{y:-14,'text-anchor':'middle','font-size':8,fill:'#fca5a5','font-weight':900});l.textContent=m.n;e.appendChild(l);e.appendChild(NSE('circle',{r:15,fill:'transparent'}));
+  zT.push(gsap.to(e.firstChild,{scale:1.25,transformOrigin:'50% 50%',repeat:-1,yoyo:true,duration:.7}));e.onclick=()=>zInfo(m.k,'P')});
+ return {g,ms,cy}}
+function buildTop(S){zTis=[];S.appendChild(NSE('rect',{x:0,y:TY,width:360,height:60,fill:'rgba(180,99,122,.12)'}));
+ for(let i=0;i<6;i++){const g=NSE('g',{transform:`translate(${33+i*58},${TY+24})`});g.appendChild(NSE('ellipse',{rx:27,ry:22,fill:'rgba(180,99,122,.4)'}));dots(g,stad(27,22,30),2.5,'#e9a8bd');g.appendChild(NSE('circle',{r:8,fill:'#6b2a45',opacity:.8}));S.appendChild(g);zTis.push(g)}
+ const l=NSE('text',{x:6,y:TY+60,'font-size':8,fill:'#e9a8bd','font-weight':800});l.textContent='tejido (epitelio)';S.appendChild(l);
+ const T=sc.type==='Virus'?'v':sc.type==='Hongo'?'f':sc.type==='Helminto'?'h':sc.type==='Bacteria Gram+'?'gp':'gn',r=drawPg(S,T);zPG=r.g;zPM=r.ms;zCY=r.cy;zX=PXO[T];r.g.setAttribute('transform',`translate(${zX},62)`)}
+function zRing(col){const S=$('zsvg'),r=NSE('circle',{cx:CX,cy:CY,r:RR,fill:'none',stroke:col,'stroke-width':4});S.appendChild(r);gsap.to(r,{attr:{r:RR+70},opacity:0,duration:1.1,onComplete:()=>r.remove()})}
+function zInvade(done){const S=$('zsvg');zcap('El patógeno <b>choca contra el tejido</b> y libera <b>toxinas y enzimas</b> que rompen las células. De ellas salen los <b style="color:#f59e0b">DAMPs ⬢</b>: el daño lo causa el invasor, pero los DAMPs son de <b>mi tejido</b>.');
+ orgFly(zPG,[zX,62],[zX-8,zCY],2.4,()=>{
+  for(let i=0;i<7;i++)zT.push(gsap.delayedCall(i*.22,()=>{const e=NSE('circle',{r:3,fill:'#84cc16',opacity:.9});S.appendChild(e);orgFly(e,[zX-8+Math.random()*40-20,zCY+30],[110+Math.random()*90,TY+14],.8,()=>e.remove(),5)}));
+  zT.push(gsap.delayedCall(1.6,()=>{[2,3].forEach(c=>gsap.to(zTis[c].querySelectorAll('circle,ellipse'),{attr:{fill:'#f59e0b'},duration:.5}));
+   const L=['ATP','HMGB1','Ác. úrico','ADN libre'];
+   L.forEach((lb,i)=>zT.push(gsap.delayedCall(i*.4,()=>{const g=mkP(S,'D',lb),sx=116+(i%2)*58+Math.random()*16,sy=TY+50;g.setAttribute('transform',`translate(${sx},${sy})`);gsap.from(g,{opacity:0,duration:.4});if(i===0)zcam(SH2,2.6);
+    orgFly(g,[sx,sy],[CX-30+Math.random()*60,CY-RR-48],3,()=>{gsap.to(g,{opacity:0,duration:.2,onComplete:()=>g.remove()});if(i===L.length-1){zRing('#f59e0b');zInfo('HMGB1','D');done()}},16)})))}))},8)}
+function zFrag(done){const S=$('zsvg');zcap('Al dividirse o ser destruido (complemento, lisozima, fagocitos), el microbio suelta <b>pedazos de sus estructuras</b>: <b style="color:#ef4444">PAMPs solubles ▲</b> que viajan hasta la centinela. Por eso atacar al patógeno también aumenta la señal de PAMPs.');
+ zcam(SH1,.7);gsap.to(zPG,{opacity:.45,duration:1.2});const L=[];zPM.forEach(m=>L.push(m.n,m.n));if(!L.length)L.push('Fragmentos');
+ L.forEach((lb,i)=>zT.push(gsap.delayedCall(.9+i*.5,()=>{const g=mkP(S,'P',lb),sx=zX-8+Math.random()*50-25,sy=zCY+Math.random()*16;g.setAttribute('transform',`translate(${sx},${sy})`);gsap.from(g,{opacity:0,duration:.4});if(i===0)zcam(SH2,2.8);
+  orgFly(g,[sx,sy],[CX-40+Math.random()*80,CY-RR-48],3.2,()=>{gsap.to(g,{opacity:0,duration:.2,onComplete:()=>g.remove()});if(i===L.length-1){zRing('#ef4444');const e=$('z-info');e.style.borderColor='#ef4444';e.innerHTML='<b style="color:#ef4444">▲ PAMPs solubles</b><br>Pedazos de las estructuras del microbio flotando en el tejido.<br>👉 Le dicen a la célula: <i>hay un microbio cerca</i>, aunque no lo toque.';e.style.display='block';gsap.fromTo(e,{opacity:0,y:8},{opacity:1,y:0,duration:.4});done()}},18)})))}
+function toZoom(){if(bStep!==3)return;bStep=-1;$('breach').classList.remove('active');$('zoom').classList.add('active');zStage=0;$('z-info').style.display='none';
+ $('z-go').style.display='block';$('z-go').innerText='Siguiente ▶';
+ if(!window.gsap){zcap('Los PAMPs y DAMPs se unen a su receptor específico (TLR) en la célula centinela.');return}
+ buildZoom();zcap('Así es un <b>invasor</b> junto al tejido. Toca los <b style="color:#ef4444">▲ rojos</b>: son sus <b>PAMPs</b>, estructuras <b>esenciales</b> que el microbio no puede dejar de tener; por eso el sistema inmune las usa como firma. Más abajo espera la célula centinela.');
+ gsap.fromTo('#zoom',{scale:.3,opacity:0},{scale:1,opacity:1,duration:.8,ease:'power2.out',clearProps:'transform,opacity'})}
+function toHub(){zk();$('zoom').classList.remove('active');$('breach').classList.add('active');bStep=3}
+function zBuild(){const A=[{k:'V'},{k:'F'}];sc.pamps.filter(p=>PT[p]).slice(0,2).forEach(p=>A.push({k:'P',key:p,rn:PT[p],label:LS[p]}));
+ A.push({k:'D',key:'HMGB1',rn:'TLR4',label:'HMGB1'},{k:'D',key:'HSP70',rn:'TLR2',label:'HSP70'});
+ A.push({k:'E',key:sc.pamps.some(p=>p==='ARNbc'||p==='ARNmc')?'ARNv':'CPG'});return A}
+function zBind(rc,rmax){rc.sw.kill();const c={a:0};zT.push(gsap.to(c,{a:14,duration:.7,ease:'back.out(2)',onUpdate:()=>{rc.ys[0].setAttribute('transform',`rotate(${c.a})`);rc.ys[1].setAttribute('transform',`rotate(${-c.a})`)}}));
+ gsap.to(rc.lab,{attr:{'font-size':rc.loc==='e'?7:11,fill:'#fff'},duration:.3,yoyo:true,repeat:1});
+ const S=$('zsvg'),r=NSE('circle',{cx:rc.tx,cy:rc.ty,r:4,fill:'none',stroke:rc.col,'stroke-width':rc.loc==='e'?1.5:3});S.appendChild(r);gsap.to(r,{attr:{r:rmax||30},opacity:0,duration:.9,onComplete:()=>r.remove()})}
+function zInfo(key,k,id){const I=INFO[key],col=k==='D'?'#f59e0b':'#ef4444',e=$(id||'z-info');
+ e.style.borderColor=col;e.innerHTML=`<b style="color:${col}">${k==='D'?'⬢ DAMP':'▲ PAMP'} · ${I[0]}</b><br>Viene de: ${I[1]}.<br>Lo reconoce: <b>${I[2]}</b>.<br>👉 Le dice a la célula: <i>${I[3]}</i>.`;e.style.display='block';gsap.fromTo(e,{opacity:0,y:8},{opacity:1,y:0,duration:.4})}
+function zSurf(a,done){const S=$('zsvg'),rc=zRec[a.rn],g=mkP(S,a.k,a.label),ang=Math.atan2(rc.ty-CY,rc.tx-CX)+(Math.random()-.5)*.6,sx=rc.tx+Math.cos(ang)*115,sy=rc.ty+Math.sin(ang)*115;
+ g.setAttribute('transform',`translate(${sx},${sy})`);gsap.from(g,{opacity:0,duration:.5});
+ orgFly(g,[sx,sy],[rc.tx,rc.ty],2.4,()=>{gsap.to(g,{opacity:0,duration:.3,onComplete:()=>g.remove()});zBind(rc);zInfo(a.key,a.k);done()},14)}
+function zEndo(a,done){const S=$('zsvg'),vb=zVB,cam=(o,d)=>gsap.to(vb,Object.assign({duration:d,ease:'power2.inOut',onUpdate:()=>S.setAttribute('viewBox',`${vb.x} ${vb.y} ${vb.w} ${vb.h}`)},o)),dc=(t,f)=>zT.push(gsap.delayedCall(t,f));
+ zcap('<b>Ruta endosomal</b>: los ácidos nucleicos no se detectan en la superficie. La célula los <b>engulle</b> en una vesícula (endocitosis) y los reconoce dentro, en el endosoma.');
+ cam({x:35,y:385,w:170,h:200},1.3);dc(1,()=>gsap.to('.zl',{opacity:1,duration:.8}));
+ const ux=Math.cos(PIT),uy=Math.sin(PIT),P0=[CX+RR*ux,CY+RR*uy],nx=-ux,ny=-uy;
+ const vg=NSE('g',{}),vc=NSE('circle',{r:3,fill:'rgba(168,85,247,.2)',stroke:'#c084fc','stroke-width':1.5,opacity:0});vg.appendChild(vc);vg.appendChild(NSE('circle',{r:9,fill:'#ef4444',opacity:.18,class:'gl'}));
+ vg.appendChild(NSE('path',{d:'M-8,0 q2.5,-6 5,0 t5,0 t5,0',stroke:'#ef4444','stroke-width':2.2,fill:'none','stroke-linecap':'round',class:'sh'}));
+ const tx=NSE('text',{y:-15,'text-anchor':'middle','font-size':6,fill:'#fca5a5','font-weight':900});tx.textContent=a.key==='ARNv'?'ARN viral':'ADN CpG';vg.appendChild(tx);S.appendChild(vg);
+ const A0=[P0[0]-nx*55,P0[1]-ny*55],c0=[P0[0]-nx*8,P0[1]-ny*8],c1=[P0[0]+nx*11,P0[1]+ny*11];vg.setAttribute('transform',`translate(${A0[0]},${A0[1]})`);gsap.from(vg,{opacity:0,duration:.6,delay:1.2});
+ const fuse=()=>{const tg=[EX-(c1[0]-EX)/1*0,0];};
+ const travel=()=>{const vx=EX-c1[0],vy=EY-c1[1],L=Math.hypot(vx,vy),tg=[EX-vx/L*(ER+12),EY-vy/L*(ER+12)];
+  orgFly(vg,c1,tg,2.2,()=>{gsap.to(vc,{opacity:0,duration:.8});gsap.fromTo(zE2,{attr:{r:ER}},{attr:{r:ER+4},duration:.4,yoyo:true,repeat:1});
+   orgFly(vg,tg,[EX,EY],1.1,()=>{(a.key==='ARNv'?['TLR3','TLR7']:['TLR9']).forEach(n=>zBind(zRec[n],14));zInfo(a.key,'P');gsap.to(vg,{opacity:0,duration:1.2,delay:1.5});done()},0)},5)};
+ const pit=()=>{zMem.forEach(m=>{const w=Math.max(0,Math.cos(m.d/.17*Math.PI/2)),k={v:0};zT.push(gsap.to(k,{v:1,duration:.9,ease:'sine.inOut',onUpdate:()=>{const dd=16*w*k.v;m.e.setAttribute('cx',m.cx+nx*dd);m.e.setAttribute('cy',m.cy+ny*dd)}}))});
+  const k={v:0};zT.push(gsap.to(k,{v:1,duration:.9,ease:'sine.inOut',onUpdate:()=>vg.setAttribute('transform',`translate(${c0[0]+(c1[0]-c0[0])*k.v},${c0[1]+(c1[1]-c0[1])*k.v})`)}));
+  dc(1,()=>{gsap.to(vc,{attr:{r:13},opacity:1,duration:.5});zMem.forEach(m=>gsap.to(m.e,{attr:{cx:m.cx,cy:m.cy},duration:.7,ease:'sine.out'}));dc(.8,travel)})};
+ dc(1.5,()=>orgFly(vg,A0,c0,2,pit,6))}
+function zAct(){if(!window.gsap)return;if(zStage===3){toHub();return}if(zStage===1)return;
+ if(zStage===0){zActs=zBuild();zi=0}
+ const a=zActs[zi++];zStage=1;$('z-go').style.display='none';$('z-info').style.display='none';
+ const fin=()=>{if(zi>=zActs.length){zStage=3;$('z-go').innerText='Volver ▶ (elige qué ver)'}else{zStage=2;$('z-go').innerText=zActs[zi].k==='E'?'Ruta endosomal ▶':'Siguiente ▶'}$('z-go').style.display='block'};
+ if(a.k==='V')zInvade(fin);else if(a.k==='F')zFrag(fin);else if(a.k==='E')zEndo(a,fin);
+ else{zcam(SH2,.9);zcap(`<b>Receptores de superficie</b> · un <b style="color:${a.k==='D'?'#f59e0b':'#ef4444'}">${a.k==='D'?'DAMP ⬢ (de mi tejido dañado)':'PAMP ▲ (del invasor)'}</b> busca su receptor TLR.`);zSurf(a,fin)}}
+const FXMAP={neutro:'nets',macroM1:'engulf',eosino:'rain',nk:'beads',paneth:'def',masto:'hist'};
+function fx(id,x,y){const k=FXMAP[id];if(!k||!window.gsap)return;
+ const mk=(w,h,css)=>{const e=document.createElement('div');e.style.cssText=`position:fixed;z-index:650;pointer-events:none;width:${w}px;height:${h}px;left:${x-w/2}px;top:${y-h/2}px;${css}`;document.body.appendChild(e);return e},rm=e=>()=>e.remove();
+ if(k==='rain')for(let i=0;i<24;i++){const e=mk(7,7,`border-radius:50%;background:${i%2?'#fb923c':'#f472b6'};box-shadow:0 0 6px #fb923c`);gsap.fromTo(e,{x:Math.random()*130-65,y:-160-Math.random()*80},{y:Math.random()*40-10,duration:.6+Math.random()*.3,delay:i*.03,ease:'power2.in',onComplete:()=>gsap.to(e,{opacity:0,duration:.2,onComplete:rm(e)})})}
+ else if(k==='engulf'){const r=mk(180,180,'border-radius:50%;border:4px solid #4ade80;box-shadow:0 0 18px #4ade80');gsap.fromTo(r,{scale:1.3,opacity:.9},{scale:.25,opacity:0,duration:.75,ease:'power2.in',onComplete:rm(r)});for(let i=0;i<12;i++){const a=i/12*6.283,e=mk(6,6,'border-radius:50%;background:#86efac');gsap.fromTo(e,{x:Math.cos(a)*85,y:Math.sin(a)*85},{x:0,y:0,opacity:0,duration:.6,delay:.1,ease:'power2.in',onComplete:rm(e)})}}
+ else if(k==='nets')for(let i=0;i<16;i++){const e=mk(2,80,'background:linear-gradient(#e2e8f0,transparent);transform-origin:50% 0');e.style.top=y+'px';gsap.fromTo(e,{rotation:i/16*360,scaleY:0,opacity:1},{scaleY:1,opacity:0,duration:.8,ease:'power2.out',onComplete:rm(e)})}
+ else if(k==='beads')for(let i=0;i<8;i++){const e=mk(6,6,'border-radius:50%;background:#fde047;box-shadow:0 0 8px #fde047');gsap.fromTo(e,{x:-170,y:(i-3.5)*8},{x:0,y:0,duration:.35,delay:i*.05,ease:'power1.in',onComplete:()=>gsap.to(e,{scale:2.5,opacity:0,duration:.2,onComplete:rm(e)})})}
+ else if(k==='hist')for(let i=0;i<16;i++){const a=i/16*6.283,e=mk(7,7,'border-radius:50%;background:#facc15');gsap.to(e,{x:Math.cos(a)*(50+Math.random()*40),y:Math.sin(a)*(50+Math.random()*40),opacity:0,duration:.9,ease:'power2.out',onComplete:rm(e)})}
+ else if(k==='def')for(let i=0;i<14;i++){const e=mk(8,8,'background:#22d3ee;clip-path:polygon(25% 5%,75% 5%,100% 50%,75% 95%,25% 95%,0 50%)');gsap.fromTo(e,{x:Math.random()*110-55,y:-120},{y:Math.random()*30,rotation:200,duration:.6,delay:i*.04,ease:'power1.in',onComplete:()=>gsap.to(e,{opacity:0,duration:.2,onComplete:rm(e)})})}}
+function runScan(){
+ const rows=$('s-rows');rows.innerHTML='';$('s-img').style.backgroundImage=`url('${sc.av}')`;$('s-name').innerText='???';
+ $('s-go').style.cssText='max-width:320px;margin-top:12px;opacity:0;pointer-events:none';
+ $('s-title').innerText='⚠ SEÑAL DE PELIGRO';$('s-sub').innerText='El tejido dañado libera DAMPs (ATP extracelular, HMGB1) y atrae centinelas. Aún no sabemos qué invade…';
+ sc.pamps.forEach(p=>{const P=PAMP[p]||{n:p,s:''},rs=Object.keys(RULES).filter(r=>RULES[r].includes(p)),d=document.createElement('div');d.className='srow';
+  d.innerHTML=`<div class="sp"><b><span style="color:#ef4444">▲</span> ${P.n}</b><small>${P.s}</small></div><div class="sa">➔</div><div class="sr">${rs.map(r=>`<span class="rc l-${LOC[r][0]}">${r}<small>${LOC[r][1]}</small></span>`).join('')}</div>`;rows.appendChild(d)});
+ const fin=()=>{$('s-name').innerText=`${sc.enemy} (${sc.type})`;$('s-title').innerText='🔬 FIRMA MOLECULAR (vista del laboratorio)';$('s-sub').innerText='Esto lo ves tú, no tu sistema inmune. Elige defensas cuyos PRR puedan detectar estos PAMPs.';$('s-go').style.opacity=1;$('s-go').style.pointerEvents='auto'};
+ if(!window.gsap){[...rows.children].forEach(r=>{r.style.opacity=1;r.style.transform='none'});$('s-img').style.filter='none';return fin()}
+ gsap.timeline().set('#s-img',{filter:'brightness(0) drop-shadow(0 0 12px #ef4444)'})
+  .fromTo('#s-beam',{y:0,opacity:1},{y:187,duration:.7,repeat:3,yoyo:true,ease:'none'})
+  .call(()=>{$('s-title').innerText='🔬 ESCÁNER MOLECULAR';$('s-sub').innerText='Los PRR reconocen PAMPs: patrones moleculares propios de microbios. El color indica dónde está cada receptor.'},null,.8)
+  .to('.srow',{opacity:1,x:0,duration:.4,stagger:.7},.9)
+  .to('#s-img',{filter:'brightness(1) drop-shadow(0 0 14px #ef4444)',duration:.8}).to('#s-beam',{opacity:0,duration:.2},'<').call(fin)}
+function initDraft(){
+ $('d-tissue').innerText=sc.name;$('d-name').innerText=`${sc.enemy} (${sc.type})`;
+ $('d-vuln').innerText=sc.vuln+' PAMPs: '+sc.pamps.map(p=>`▲${p}`).join(' ');
+ $('d-evade').innerText=`🛡 Evasión: ${sc.ev.n}. ${sc.ev.d}${sc.cont?' ⚠ La innata sola no basta: contén y activa la Dendrítica.':''}`;$('d-img').style.backgroundImage=`url('${sc.av}')`;
+ const g=$('grid');g.innerHTML='';
+ GRP.forEach(([h,sub,ids])=>{const hd=document.createElement('div');hd.className='gh';hd.innerHTML=`<b>${h}</b><small>${sub}</small>`;g.appendChild(hd);ids.map(i=>CARDS.find(k=>k.id===i)).forEach(c=>{const e=document.createElement('div');e.className=`card ${c.cat}`;
+  e.innerHTML=`${chips(c)}<div class="ci" style="background-image:url('${c.img}')"></div><div class="cc">${c.cost}</div><div class="cf"><div class="cn">${c.name}</div><div class="rl">${rl(c)}</div><div class="cm">${c.m}</div></div>`;
+  e.onclick=()=>{const i=deck.indexOf(c);if(i>-1){deck.splice(i,1);e.classList.remove('sel')}else if(deck.length<5){deck.push(c);e.classList.add('sel')}
+   $('d-count').innerText=deck.length;$('go').disabled=deck.length!==5;cov()};g.appendChild(e)})});cov()}
+
+function startBattle(){
+ $('draft').classList.remove('active');const b=$('battle');b.style.backgroundImage=`url('${sc.bg}')`;b.classList.add('active');
+ $('env').innerText=sc.name;$('ea').style.backgroundImage=`url('${sc.av}')`;$('en').innerText=sc.enemy;
+ eHp=eMax=sc.hp;render();tip('start',sc.cont?'¡Infección difícil! La innata sola no puede eliminarlo: contén al patógeno y juega la Dendrítica para activar la adaptativa.':'¡Hospedero infectado! Tu sistema inmune aún no detecta nada. Juega una centinela 👁 cuyo receptor reconozca un PAMP (cada uno se marca ✔): ① Detectar ② Alertar ③ Reclutar ④ Eliminar.');if(evaded)tip('ev','🛡 '+sc.ev.n+': '+sc.ev.d)}
+
+function affinity(c){for(const r of c.prrs)for(const p of sc.pamps)if((RULES[r]||[]).includes(p))return{r,p};return null}
+function atkNow(){return Math.round(sc.atk*(1+(load-1)/2)*(evaded&&eHp<eMax/2?1.3:1))}
+
+function render(){maxCyt=Math.max(maxCyt,cyt);if(sc.cont&&!adOK){const fl=Math.round(eMax*.25);if(eHp<fl)eHp=fl}
+ $('pb').style.width=Math.max(0,hp/MHP*100)+'%';$('pt').innerText=`${Math.max(0,hp)} / ${MHP}`;
+ $('eb').style.width=Math.max(0,eHp/eMax*100)+'%';$('et2').innerText=`${Math.max(0,eHp)} / ${eMax}`;
+ $('atp').innerText=atp;$('endt').classList.toggle('pulse',atp===0&&turn==='PLAYER'&&!busy);
+ $('ea').classList.toggle('evade',evaded);
+ let f='';
+ if(evaded)f+=`<span class="flag" style="background:#78350f">🛡 ${sc.ev.n}: daño ×0.5</span>`;
+ if(damps)f+=`<span class="flag" style="background:#9a3412">⬢ DAMPs ${damps} (+${damps*4} daño)</span>`;
+ if(ops)f+=`<span class="flag" style="background:#7e22ce">🎯 Opsonizado ×${ops}</span>`;
+ if(stun)f+=`<span class="flag" style="background:#854d0e">😵 Aturdido ${stun}</span>`;
+ if(shield)f+=`<span class="flag" style="background:#075985">🛡 Escudo IFN</span>`;
+ if(apc>0)f+=`<span class="flag" style="background:#6b21a8">🧬 Ganglio ${apc}t · ①✔ ②${sig2?'✔':'✖'} ③${cyt>=4?'✔':'✖'}</span>`;if(cyt>0)f+=`<span class="flag" style="background:#9a3412">🔥 Citoquinas ${cyt}/10</span>`;if(sc.cont&&!adOK)f+=`<span class="flag" style="background:#1e3a8a">⏳ Contención: espera a la adaptativa</span>`;
+ $('flags').innerHTML=f;rsteps();rsig();$('casc').style.visibility=casc>=0?'visible':'hidden';$('casc').innerHTML='<span class="cl">🧬 Complemento</span>'+CS.map((x,i)=>`<div id="cb${i}" class="cb ${i<casc?'on':''}">${x[0]}</div>`).join('');
+ $('intent').innerText=stun?'😵 No atacará':`⚔️ Próximo ataque: ${atkNow()}${shield?' → '+Math.floor(atkNow()*ifnF()):''}`;
+ const h=$('hand');h.innerHTML='';
+ deck.forEach(c=>{const cost=cst(c);
+  const off=busy||turn!=='PLAYER'||atp<cost||used.has(c.id)||(c.id==='dendro'&&apc>-1)||(c.id==='comp'&&casc>-1);
+  const a=affinity(c),e=document.createElement('div');
+  e.className=`card ${c.cat} ${a?'match':''} ${off?'off':''}`;
+  e.innerHTML=`${chips(c)}<div class="ci" style="background-image:url('${c.img}')"></div><div class="cc" style="${cost===0?'background:#a855f7;color:#fff':''}">${cost}</div><div class="cf"><div class="cn">${c.name}</div><div class="rl">${rl(c)}</div><div class="cm">${used.has(c.id)?'Usada este turno':c.m}</div></div>`;
+  e.onclick=ev=>play(c,ev.currentTarget);h.appendChild(e)})}
+
+function fct(t,col,x,y){const e=document.createElement('div');e.className='fct';e.style.color=col;e.innerText=t;e.style.left=x+'px';e.style.top=y+'px';document.body.appendChild(e);setTimeout(()=>e.remove(),1300)}
+const shake=el=>{el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake')};
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+
+function skipDock(){if(tl)tl.progress(1)}
+function dock(r,l){return new Promise(res=>{
+ $('t-r').textContent=r;$('t-l').textContent=l;$('d-title').textContent=`¡${r} ⮂ ${l}!`;$('d-casc').textContent='';$('d-why').textContent='💡 '+(WHY[r]||'');
+ const o=$('dock');o.classList.add('on');const bu=$('burst');bu.innerHTML='';
+ for(let i=0;i<10;i++){const c=document.createElementNS(NS,'circle');c.setAttribute('r',3.5);c.setAttribute('fill',i%2?'#38bdf8':'#ef4444');bu.appendChild(c)}
+ const steps=(CASC[r]||'').split(' → ');let shown=[];
+ tl=gsap.timeline({onComplete:()=>{o.classList.remove('on');tl=null;res()}});
+ tl.set('#rec',{x:25,y:90,opacity:.3,rotation:-20}).set('#lig',{x:300,y:90,opacity:.3,rotation:20}).set('#burst',{opacity:1})
+  .to('#rec',{x:122,opacity:1,rotation:0,duration:.5,ease:'power3.in'},0)
+  .to('#lig',{x:190,opacity:1,rotation:0,duration:.5,ease:'power3.in'},0).addLabel('hit')
+  .to(['#rec','#lig'],{scale:1.18,yoyo:true,repeat:1,duration:.12,transformOrigin:'50% 50%'},'hit')
+  .to('#rec',{filter:'drop-shadow(0 0 14px #38bdf8)',duration:.2},'hit');
+ [...bu.children].forEach((c,i)=>{const a=i/10*6.283;tl.fromTo(c,{x:160,y:90,opacity:1},{x:160+Math.cos(a)*90,y:90+Math.sin(a)*65,opacity:0,duration:.6,ease:'power2.out'},'hit')});
+ steps.forEach(s=>{tl.call(()=>{shown.push(s);$('d-casc').textContent='➔ '+shown.join(' → ')},null,'+=.35')});
+ tl.to({},{duration:1.4})})}
+
+async function play(c,el){
+ let cost=cst(c);
+ if(busy||turn!=='PLAYER'||atp<cost||used.has(c.id)||(c.id==='dendro'&&apc>-1)||(c.id==='comp'&&casc>-1))return;
+ busy=true;atp-=cost;used.add(c.id);
+ const cr=el.getBoundingClientRect(),er=$('ea').getBoundingClientRect();
+ const sx=cr.left+cr.width/2,sy=cr.top+cr.height/2,ex=er.left+er.width/2,ey=er.top+er.height/2;
+ const p=document.createElement('div');p.className='proj';p.style.backgroundImage=`url('${c.img}')`;p.style.left=sx-25+'px';p.style.top=sy-25+'px';document.body.appendChild(p);
+ void p.offsetWidth;p.style.transform=`translate(${ex-sx}px,${ey-sy}px) scale(1.3) rotate(360deg)`;
+ render();await wait(420);p.remove();fx(c.id,ex,ey);
+ const a=affinity(c);
+ if(a&&(recog||SENT.includes(c.id))){log[a.r+' ⮂ '+a.p]=(log[a.r+' ⮂ '+a.p]||0)+1;await dock(a.r,a.p);det.add(a.p);puff('trp',ex,ey,$('al-p'));ev(`${c.name}: ${a.r} ⮂ ${a.p}`);cyt=Math.min(10,cyt+2);if(apc>0&&!sig2){sig2=true;fct('② COESTIMULACIÓN ACTIVADA','#a855f7',ex,ey-140);ev('Señal ② activada por un reconocimiento PRR durante la migración')}if(cyt>=4)tip('c4','¡Citoquinas ≥ 4! Ya está lista la señal ③ de la dendrítica.');tip('cyt','Cada reconocimiento libera citoquinas (TNF, IL-1, IL-6): inflaman, reclutan células y orientan a la respuesta adaptativa. Mira la barra 🔥.')}
+ else if(c.prrs.length&&c.type!=='heal'){fct(a?'Aún sin detectar':'Sin afinidad','#94a3b8',ex,ey-70);if(!a)miss.add(c.name)};
+ if(!recog&&a&&SENT.includes(c.id)){recog=true;recT=2;ev(`Reconocimiento por ${c.name} (${a.r} ⮂ ${a.p})`);fct('¡PAMP RECONOCIDO!','#38bdf8',ex,ey-120);fct('Se reclutan: '+REC[sc.type].map(i=>CARDS.find(k=>k.id===i).name).join(', '),'#fbbf24',ex,ey-95);render();tip('recog','¡Alarma activada! El PRR detectó un PAMP: se liberan citoquinas, se reclutan células de la misma estirpe y tus críticos funcionan.')}
+ // romper evasión
+ if(evaded&&sc.ev.br.includes(c.id)){evaded=false;evT=3;ev(`Rompiste la evasión (${sc.ev.n}) con ${c.name}`);fct('¡EVASIÓN ROTA!','#fbbf24',ex,ey-100)}
+ if(c.type==='atk'){
+  let d=c.val;
+  if(a&&recog){d=Math.floor(d*1.75);fct(`CRÍTICO ${a.r}⮂${a.p}`,'#38bdf8',ex,ey-60)}else if(!recog){d=Math.floor(d/2);fct('Sin alarma inmune: ×0.5','#94a3b8',ex,ey-60)}
+  if(damps){d+=damps*4;if(c.prrs.includes('NLRP3')&&damps>=2){d+=15;fct('NLRP3 +15','#f97316',ex,ey-40)}}
+  if(c.id==='eosino'&&sc.type==='Helminto'){d*=2;fct('PROTEÍNA BÁSICA MAYOR','#22c55e',ex,ey-80)}
+  if(ops&&(c.id==='neutro'||c.id==='macroM1')){d*=2;ops--;fct('FAGOCITOSIS CR1 ×2','#a855f7',ex,ey-30)}
+  if(evaded)d=Math.floor(d/2);
+  eHp-=d;fct(`-${d}`,'#ef4444',ex,ey);shake($('ea'));
+ }else if(c.type==='heal'){hp=Math.min(MHP,hp+c.val);damps=Math.max(0,damps-2);fct(`+${c.val}`,'#22c55e',ex,ey+40)}
+ else if(c.type==='stun'){stun=a?2:1;fct('ATURDIDO','#eab308',ex,ey)}
+ else if(c.type==='casc'){casc=0;await cascStep()}
+ else if(c.type==='shield'){shield=true;fct('ESCUDO IFN','#38bdf8',ex,ey)}
+ else if(c.type==='atp'){atp+=a?2:1;fct('ALERTA CENTINELA','#38bdf8',ex,ey)}
+ else if(c.type==='apc'){apc=a?3:4;sig2=!!a;dcUsed=true;ev(a?'Dendrítica con PRR activado: migra al ganglio':'Dendrítica sin PRR activado: migra al ganglio');fct('APC MIGRANDO AL GANGLIO','#d8b4fe',ex,ey);tip('dc','La dendrítica captura antígeno y migra al ganglio. Para activar al linfocito T necesita 3 señales: ① antígeno, ② coestimulación (se activa cuando un PRR reconoce algo mientras migra: ¡juega cartas con match!) y ③ citoquinas (🔥 ≥ 4). Sigue las barras. Sin ②, hay tolerancia.')}
+ busy=false;render();
+ if(eHp<=0)end(true)}
+
+async function enemyTurn(){
+ if(busy||turn!=='PLAYER'||eHp<=0)return;
+ turn='ENEMY';busy=true;render();const ann=$('ann');
+ const say=async(t,bg)=>{ann.innerText=t;ann.style.background=bg;ann.style.transform='';ann.classList.remove('show');void ann.offsetWidth;ann.classList.add('show');await wait(1300);ann.classList.remove('show');ann.style.transform='translateX(-100vw)';await wait(100);ann.style.transform=''};
+ if(stun>0){stun--;await say('PATÓGENO ATURDIDO','rgba(202,138,4,.95)')}
+ else{
+  await say('TURNO DEL PATÓGENO','rgba(220,38,38,.95)');
+  let d=atkNow();if(shield){d=Math.floor(d*ifnF());shield=false;ifn=sc.type==='Virus'}
+  const er=$('ea').getBoundingClientRect(),pr=$('pb').getBoundingClientRect();
+  gsap.fromTo('#ea',{scale:1},{scale:1.3,y:30,duration:.2,yoyo:true,repeat:1});await wait(250);
+  hp-=d;damps=Math.min(5,damps+1);puff('hx',pr.left+pr.width/2,pr.top,$('al-d'));cyt=Math.min(10,cyt+1);tip('damps','Cada daño al tejido libera DAMPs (alarminas): también alertan al sistema inmune y potencian tu daño.');fct(`-${d}`,'#ef4444',pr.left+pr.width/2,pr.top-10);
+  document.body.classList.add('flash');setTimeout(()=>document.body.classList.remove('flash'),500);render();
+  if(hp<=0)return end(false);await wait(700)}
+ {turnN++;const g=GR[sc.type]||0,rr=$('ea').getBoundingClientRect(),X=rr.left+rr.width/2,Y=rr.top+rr.height/2;
+  if(g){const gg=ifn?g/2:g,h=Math.round(eMax*gg*.35);load*=1+gg;eHp=Math.min(eMax,eHp+h);fct(`🦠 Proliferación +${h}`,'#f87171',X,Y-60);tip('prol','El patógeno se multiplica: la innata es rápida pero inespecífica. Contiene, y a veces no basta.')}ifn=false;
+  if(!recog&&turnN>=3){recog=true;recT=0;ev('Alarma tardía por DAMPs: ninguna centinela con receptor compatible, el hospedero se alertó sin identificar PAMPs');fct('Alarma tardía por DAMPs: sin PAMPs detectados','#38bdf8',X,Y-90)}
+  if(recT>0)recT--;if(evT>0&&--evT===0){evaded=true;fct('¡Evasión reconstruida!','#fbbf24',X,Y-120)}render()}
+ if(apc>0)apc--;
+ if(apc===0){apc=-1;await say('MADURA LA RESPUESTA ADAPTATIVA','rgba(168,85,247,.95)');
+  await adaptive();if(eHp<=0)return end(true)}
+ if(casc>=0){await cascStep();if(eHp<=0)return end(true)}atp=MATP+cbonus;cbonus=0;used.clear();turn='PLAYER';busy=false;render()}
+
+const CS=[['C3b','Opsonización'],['C3 conv.','Amplificación'],['C5a','Recluta células'],['C5b-7','Ensamblaje'],['C8','Poro inicial'],['C9','MAC']];
+function macAnim(x,y){return new Promise(res=>{const ds=[];for(let i=0;i<12;i++){const a=i/12*6.283,e=document.createElement('div');e.style.cssText=`position:fixed;z-index:400;width:14px;height:14px;border-radius:50%;background:#10b981;box-shadow:0 0 10px #10b981;left:${x+Math.cos(a)*70-7}px;top:${y+Math.sin(a)*70-7}px`;document.body.appendChild(e);ds.push(e)}
+ const done=()=>{ds.forEach(e=>e.remove());res()};if(!window.gsap)return setTimeout(done,800);
+ gsap.from(ds,{scale:0,opacity:0,duration:.25,stagger:.07,ease:'back.out(3)'});gsap.to(ds,{scale:2.2,opacity:0,duration:.35,delay:1.1,onComplete:done})})}
+async function cascStep(){
+ const i=casc,r=$('ea').getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;casc=i+1;
+ fct(`${CS[i][0]} · ${CS[i][1]}`,'#10b981',x,y-90);
+ if(i<2)ops+=2-i;else if(i===2)cbonus=1;else if(i===3)shield=true;else if(i===4)eHp-=15;
+ render();if(window.gsap)gsap.from('#cb'+i,{scale:0,duration:.4,ease:'back.out(3)'});
+ if(i===5){await macAnim(x,y);const g=sc.type==='Bacteria Gram-',d=g?(evaded?60:120):20;eHp-=d;
+  fct(g?`MAC: LISIS -${d}`:`MAC poco eficaz (-${d})`,g?'#10b981':'#94a3b8',x,y);shake($('ea'));casc=-1;render()}
+ else await wait(600)}
+const POL={'Bacteria Gram+':'Th1 con anticuerpos opsonizantes (IgG)','Bacteria Gram-':'Th1 con anticuerpos opsonizantes (IgG)',Virus:'de linfocitos T citotóxicos',Hongo:'Th17 que recluta neutrófilos',Helminto:'Th2 con IgE y eosinófilos'};
+async function adaptive(){
+ const r=$('ea').getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2,s3=cyt>=4;sigRes={s2:sig2,s3};ev(`Maduración adaptativa: ①✔ ②${sig2?'✔':'✖'} ③${s3?'✔':'✖'}`);
+ if(!sig2){fct('ANERGIA: sin coestimulación','#94a3b8',x,y);tip(null,'Falta la señal ②: la dendrítica no activó sus PRR, no expresa coestimulación (B7) y el linfocito T queda en anergia. Sin innata, no hay adaptativa.')}
+ else{adOK=true;let d=s3?150:60;
+  if(!s3)tip(null,'Faltó la señal ③: pocas citoquinas para orientar la respuesta. Resultado: respuesta adaptativa débil.');
+  else{const t=sc.type;if(t.startsWith('Bacteria'))ops+=3;else if(t==='Virus')d=190;else if(t==='Hongo'){evaded=false;evT=0}else if(t==='Helminto')recT=2;
+   tip(null,`¡Las 3 señales! Respuesta ${POL[t]}. La innata determinó la magnitud y el tipo de la adaptativa.`)}
+  eHp-=d;fct(`-${d} ${s3?'T/B':'T débil'}`,'#d8b4fe',x,y);shake($('ea'))}
+ sig2=false;render();await wait(500)}
+let vid='',stg=0,bTL=null;
+function endNext(){if(stg===1&&vid){stg=2;$('end-s').style.display='none';$('end-t').innerText='🎬 RECOMPENSA DIDÁCTICA';$('end-t').style.color='#fbbf24';$('end-d').innerText='Un meme inmunológico para cerrar la infección.';$('end-v').innerHTML=vid;$('end-btn').innerText='NUEVA INFECCIÓN'}else location.reload()}
+const seen=new Set(),Q=[];let gT=null,gOn=false;
+function tip(k,t){if(k){if(seen.has(k))return;seen.add(k)}Q.push(t);if(!gOn)gNext()}
+function gNext(){clearTimeout(gT);const g=$('guide');if(!Q.length){g.style.display='none';gOn=false;return}gOn=true;$('g-txt').innerText=Q.shift();g.style.display='flex';if(window.gsap)gsap.from('#guide',{y:30,opacity:0,duration:.3});gT=setTimeout(gNext,7500)}
+function sumHTML(win){
+ const pairs=Object.entries(log),cv=sc.pamps.map(p=>[p,deck.some(c=>c.prrs.some(r=>(RULES[r]||[]).includes(p)))]),bad=cv.filter(x=>!x[1]).map(x=>x[0]);
+ const sug=bad.map(p=>`${PAMP[p]?PAMP[p].n:p}: ${CARDS.filter(k=>k.prrs.some(r=>(RULES[r]||[]).includes(p))).map(k=>k.name).join(', ')||'—'}`);
+ const why=pairs.map(([k,n])=>`<li><b>${k}</b> ×${n} — ${WHY[k.split(' ⮂ ')[0]]||''}</li>`).join('');
+ const ad=!dcUsed?(sc.cont?'No activaste la Dendrítica: sin adaptativa, la innata solo pudo contener.':'No usaste la Dendrítica: la adaptativa no intervino (la innata bastó).'):(sigRes?(!sigRes.s2?'Faltó ②: sin PRR activado la dendrítica no coestimula, y el linfocito T queda en anergia.':!sigRes.s3?'Faltó ③: pocas citoquinas, respuesta débil.':'Las 3 señales se cumplieron: respuesta fuerte y polarizada.'):'La dendrítica no alcanzó a madurar antes del final.');
+ const tips=[];
+ if(bad.length)tips.push(`Tu equipo no cubría ${bad.join(', ')}. Prueba: ${sug.join(' · ')}.`);
+ if(miss.size)tips.push(`${[...miss].join(', ')} no reconocen este patógeno: esos turnos rindieron poco.`);
+ tips.push('Más reconocimientos PRR → más citoquinas → mejor señal ③: la innata determina la fuerza de la adaptativa.');
+ const B=(l,v,c)=>`<div class="mb"><span>${l}</span><div><i style="width:${Math.round(v*100)}%;background:${c}"></i></div></div>`,nS=dcUsed&&sigRes?1+(sigRes.s2?1:0)+(sigRes.s3?1:0):0;
+ return `<div class="sum"><h4>📊 Qué pasó y por qué</h4>${B('Cobertura PAMPs',cv.filter(x=>x[1]).length/cv.length,'#38bdf8')}${B('PAMPs detectados',det.size/sc.pamps.length,'#22c55e')}${B('Citoquinas',maxCyt/10,'#f97316')}${B('Señales adaptativas',nS/3,'#a855f7')}
+<div class="sb"><b>Cobertura molecular:</b> ${cv.map(([p,o])=>`<span class="${o?'ok':'no'}">${p} ${o?'✔':'✖'}</span>`).join(' ')}</div>
+<div class="sb"><b>Cronología</b><ul>${EV.map(e=>`<li>${e}</li>`).join('')||'<li>Sin eventos clave</li>'}</ul></div>
+<div class="sb"><b>Reconocimientos y su porqué</b><ul>${why||'<li>Ningún receptor reconoció al patógeno.</li>'}</ul></div>
+<div class="sb"><b>Adaptativa:</b> ${ad}</div>
+<div class="sb"><b>Citoquinas:</b> máx. ${maxCyt}/10 · Carga patógena ${Math.round(load*100)}% · ${turnN+1} turnos</div>
+<div class="sb"><b>💡 Lección:</b> ${tips.join(' ')}</div></div>`}
+async function end(win){Q.length=0;clearTimeout(gT);$('guide').style.display='none';
+ turn='OVER';busy=true;await wait(800);
+ $('end-t').innerText=win?'VICTORIA INMUNOLÓGICA':'INFECCIÓN SISTÉMICA';$('end-t').style.color=win?'#22c55e':'#ef4444';
+ const k=Object.entries(log).map(([a,n])=>`${a} ×${n}`).join(' · ')||'ninguno';
+ $('end-d').innerText=(win?'El tejido está asegurado.':'El patógeno venció las defensas.')+'\nReconocimientos moleculares: '+k;
+ $('end-d').style.whiteSpace='pre-line';$('end-s').innerHTML=sumHTML(win);vid=win&&sc.video?`<video autoplay loop controls playsinline style="max-height:40vh;max-width:92%;border-radius:8px;margin-bottom:18px"><source src="${sc.video}" type="video/mp4"></video>`:'';$('end-v').innerHTML='';$('end-s').style.display='block';stg=1;$('end-btn').innerText=vid?'SIGUIENTE ▶':'NUEVA INFECCIÓN';$('end').classList.add('on')}
+</script></body></html>
